@@ -1,0 +1,2179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CITYLUXOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#101820;
+    --bg-raised:#1E2B36;
+    --text-hi:#EDF2F4;
+    --text-mid:#9FB3BE;
+    --text-low:#5E7280;
+    --gold:#D9A64B;
+    --gold-dim:#4A3E24;
+    --coral:#FF6E52;
+    --teal:#3FB6A8;
+    --silver:#E9EDF1;
+    --sky:#5B93C9;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#05070A;
+    height:100vh; height:100dvh;
+    font-family:var(--font-body);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .device{
+    width:100%; height:100vh; height:100dvh;
+    background:var(--bg-deep);
+    overflow:hidden;
+    position:relative;
+    display:flex; flex-direction:column;
+  }
+
+  /* ===== RESPONSIVE FRAME =====
+     The prototype itself is intentionally phone-viewport-only (see spec §2).
+     On screens wider than a phone, we don't stretch or reflow the layout —
+     that would break the fixed pixel positioning (Tip button, Quad, etc.)
+     the spec explicitly locks in. Instead we present it centered inside a
+     realistic phone frame, like a native app running on a real device. */
+  @media (min-width:640px){
+    body{ padding:40px; }
+    .device{
+      width:390px;
+      height:844px;
+      max-height:calc(100dvh - 80px);
+      border-radius:44px;
+      box-shadow:
+        0 0 0 10px #0a0e13,
+        0 0 0 12px #2a3138,
+        0 30px 70px rgba(0,0,0,.6),
+        0 10px 24px rgba(0,0,0,.5);
+    }
+  }
+  @media (min-width:640px) and (min-height:900px){
+    .device{ height:844px; max-height:844px; }
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar{
+    position:absolute; top:0; left:0; right:0; z-index:10;
+    height:56px; flex:0 0 auto;
+    display:flex; align-items:center; gap:10px;
+    padding:0 14px;
+    background:none;
+    border-bottom:none;
+  }
+
+  /* Focus Mode content filter tabs — replaces the hamburger/logo group */
+  .focus-tabs{
+    flex:1 1 auto; min-width:0;
+    display:flex; align-items:center; gap:6px;
+    overflow-x:auto; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .focus-tabs::-webkit-scrollbar{display:none;}
+  .focus-tab{
+    flex:0 0 auto;
+    padding:6px 13px;
+    border-radius:14px;
+    font-family:var(--font-body); font-weight:600; font-size:12.5px;
+    color:rgba(255,255,255,.6);
+    background:none; border:none; cursor:pointer;
+    white-space:nowrap;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+    transition:background .15s, color .15s;
+  }
+  .focus-tab.active{
+    color:#fff;
+    background:rgba(255,255,255,.16);
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  }
+  .search-pill{
+    flex:0 0 auto; width:40px; height:40px; border-radius:50%;
+    background:rgba(32,34,58,.85); border:none;
+    display:flex; align-items:center; justify-content:center;
+    color:#B8C0DA; cursor:pointer;
+  }
+  .search-pill svg{flex:0 0 auto; opacity:.9; width:18px; height:18px;}
+  .tv-btn{
+    width:40px; height:38px; border-radius:11px; flex:0 0 auto;
+    background:#2C5D6C; color:#DFF7FA;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .tv-btn svg{width:21px; height:21px;}
+  .sound-wrap{
+    position:relative; flex:0 0 auto;
+    display:flex; align-items:center;
+  }
+  .sound-label{
+    position:absolute; top:calc(100% + 8px); right:0; transform:translateY(-4px);
+    white-space:nowrap; max-width:180px; overflow:hidden; text-overflow:ellipsis;
+    font-size:10.5px; font-weight:600; color:var(--text-hi);
+    background:rgba(10,10,18,.55); backdrop-filter:blur(6px);
+    padding:4px 9px; border-radius:10px;
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    text-shadow:0 1px 3px rgba(0,0,0,.6);
+  }
+  .sound-label.show{opacity:1; transform:translateY(0);}
+  .sound-badge{
+    width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+    background:#141414;
+    border:2px solid #2A2A2A;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    filter:drop-shadow(0 1px 4px rgba(0,0,0,.6));
+    animation:disc-spin 4s linear infinite;
+  }
+  .sound-badge svg{width:100%; height:100%;}
+  @keyframes disc-spin{ to{ transform:rotate(360deg); } }
+
+  /* ===== BODY / FEED ===== */
+  .body-wrap{
+    flex:1 1 auto; overflow:hidden;
+  }
+  .feed{
+    height:100%; overflow-y:auto;
+    padding-bottom:90px;
+    scrollbar-width:none;
+  }
+  .feed::-webkit-scrollbar{display:none;}
+
+  .post{
+    position:relative;
+    height:560px;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .post-header{
+    position:absolute; top:56px; left:0; right:0; z-index:3;
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px 10px;
+  }
+  .avatar-ring{
+    width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+    padding:2px;
+    background:conic-gradient(var(--gold), var(--coral), var(--teal), var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 1px 5px rgba(0,0,0,.7));
+  }
+  .avatar-ring .inner{
+    width:100%; height:100%; border-radius:50%;
+    background:var(--bg-raised);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:600; font-size:13px; color:var(--text-hi);
+  }
+  .post-header .who{flex:1 1 auto; min-width:0;}
+  .post-header .name{
+    font-size:13.5px; font-weight:600; color:var(--text-hi);
+    display:flex; align-items:center; gap:5px;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .post-header .name .badge{
+    font-family:var(--font-mono); font-size:9.5px; font-weight:600;
+    color:var(--gold); background:var(--gold-dim);
+    padding:1px 5px; border-radius:5px;
+    text-shadow:none;
+  }
+  .post-header .sub{
+    font-size:11.5px; color:var(--text-mid); margin-top:1px;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .post-header .more{
+    color:var(--text-hi); font-size:16px; cursor:pointer; padding:4px;
+    text-shadow:0 1px 4px rgba(0,0,0,.85);
+  }
+
+  .media{
+    position:absolute; inset:0; z-index:1;
+    background:linear-gradient(160deg,#22323d 0%, #17222c 55%, #0e1720 100%);
+    overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .media::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(217,166,75,.20), transparent 45%),
+      radial-gradient(circle at 75% 70%, rgba(63,182,168,.18), transparent 50%);
+  }
+  .media-mark{
+    font-family:var(--font-display); font-weight:600; font-size:13px;
+    color:var(--text-low); letter-spacing:.5px; z-index:1;
+  }
+
+  .post-footer{
+    position:absolute; left:0; right:0; bottom:0; z-index:3;
+    padding-bottom:2px;
+  }
+
+  .actions{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 16px;
+    background:none;
+  }
+  .actions .a-btn{
+    display:flex; align-items:center; gap:7px;
+    color:var(--silver); font-family:var(--font-mono); font-weight:600; font-size:13.5px;
+    cursor:pointer; background:none; border:none;
+    transition:transform .1s, opacity .15s;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .actions .a-btn:active{transform:scale(.92);}
+  .actions .a-btn:hover{opacity:.85;}
+  .actions .a-btn svg{flex:0 0 auto; filter:drop-shadow(0 1px 4px rgba(0,0,0,.75));}
+  .actions .sq-icon{
+    width:26px; height:26px; border-radius:7px; flex:0 0 auto;
+    background:var(--sky);
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 1px 5px rgba(0,0,0,.6));
+  }
+  .actions .sq-icon svg{filter:none;}
+  .actions .tip{padding:0; font-size:22px; filter:drop-shadow(0 1px 4px rgba(0,0,0,.75));}
+
+  .likes{
+    padding:2px 16px 4px;
+    font-size:12.5px; font-weight:600; color:var(--text-hi);
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .likes .amt{font-family:var(--font-mono); color:var(--gold);}
+  .caption{
+    padding:0 16px 6px;
+    font-size:13px; color:var(--text-hi); line-height:1.45;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .caption b{font-weight:600; margin-right:5px;}
+  .caption .muted{color:var(--text-mid);}
+  .comments-link{
+    padding:0 16px 6px; font-size:12.5px; color:var(--text-mid); cursor:pointer;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .timestamp{
+    padding:0 16px 14px; font-size:10.5px; letter-spacing:.3px;
+    color:var(--text-mid); text-transform:uppercase;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+
+  /* ===== LEFT EDGE: TIP CLC ===== */
+  .tip-edge{
+    position:absolute; left:14px; top:31%; transform:translateY(-50%);
+    z-index:20;
+    width:60px; height:60px; border-radius:50%;
+    background:linear-gradient(135deg, #1d3b2c, #16281f);
+    border:1.5px solid rgba(46,204,113,.45);
+    box-shadow:0 4px 16px rgba(0,0,0,.4);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-family:var(--font-display);
+    transition:transform .15s, background .15s, box-shadow .15s;
+  }
+  .tip-edge:hover{
+    transform:translateY(-50%) scale(1.1);
+    background:linear-gradient(135deg, #24503a, #1d3b2c);
+    box-shadow:0 6px 24px rgba(46,204,113,.3);
+  }
+  .tip-edge .gem{font-size:19px; line-height:1; filter:drop-shadow(0 1px 3px rgba(0,0,0,.4));}
+  .tip-edge .amt{
+    font-family:var(--font-mono); font-weight:700; font-size:9.5px;
+    color:#2ecc71; margin-top:2px;
+  }
+  .tip-edge .lbl{
+    font-size:8.5px; font-weight:600; color:rgba(255,255,255,.6);
+    margin-top:1px; letter-spacing:.1px;
+  }
+
+  /* ===== RIGHT EDGE: THE QUAD ===== */
+  .quad-edge{
+    position:absolute; right:16px; bottom:140px;
+    z-index:20;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .quad-btn{
+    position:relative;
+    width:52px; height:52px;
+    background:#171c2b;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:16px;
+    padding:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:21px; line-height:1; color:var(--text-hi); cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    animation:quad-entrance 300ms ease-out forwards;
+    transition:transform .12s, background .15s, box-shadow .15s;
+  }
+  .quad-btn:hover{transform:scale(1.08); background:#1f2537;}
+  .quad-btn:active{transform:scale(.92);}
+  @keyframes quad-entrance{
+    from{opacity:0; transform:translateX(20px);}
+    to{opacity:1; transform:translateX(0);}
+  }
+  .quad-btn svg{width:34px; height:34px;}
+  .quad-btn.ai-btn svg{width:38px; height:38px;}
+  .quad-btn.workspace-btn svg{opacity:1;}
+  .quad-badge{
+    position:absolute; top:-6px; right:-6px;
+    min-width:19px; height:19px; padding:0 4px;
+    border-radius:10px;
+    background:#E23B3B;
+    border:2px solid var(--bg-deep);
+    color:#fff; font-family:var(--font-mono); font-weight:700; font-size:10px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 4px rgba(0,0,0,.5);
+  }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottomnav{
+    position:absolute; left:0; right:0; bottom:0; z-index:10;
+    height:64px;
+    display:flex; align-items:stretch;
+    background:none;
+    border-top:none;
+    padding-bottom:6px;
+  }
+  .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; color:rgba(255,255,255,.65); cursor:pointer; border:none; background:none;
+    font-size:9.5px; font-weight:600; letter-spacing:.2px; font-family:var(--font-body);
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+    transition:color .15s;
+  }
+  .nav-item .ic{
+    width:21px; height:21px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 1px 4px rgba(0,0,0,.85)) drop-shadow(0 1px 10px rgba(0,0,0,.6));
+  }
+  .nav-item .ic svg{width:100%; height:100%;}
+  .nav-item.active{color:#fff;}
+  .nav-item.active .ic{color:var(--gold);}
+  .nav-item.create .ic{
+    width:30px; height:30px; border-radius:9px;
+    background:linear-gradient(135deg,var(--coral),var(--gold));
+    color:#1a1210; display:flex; align-items:center; justify-content:center;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));
+  }
+  .nav-item.create .ic svg{width:18px; height:18px;}
+
+  /* ===== PLATFORM SWITCHING (Core Shell transforms, per Volume 1 §9) ===== */
+  .platform-view{
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column;
+  }
+  .platform-view.pv-hidden{display:none;}
+
+  .platform-tabs{
+    flex:1 1 auto; min-width:0;
+    display:flex; align-items:center; gap:6px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .platform-tabs::-webkit-scrollbar{display:none;}
+  .platform-tab{
+    flex:0 0 auto; padding:6px 13px; border-radius:14px;
+    font-weight:600; font-size:12.5px; color:rgba(255,255,255,.6);
+    background:none; border:none; cursor:pointer; white-space:nowrap;
+    text-shadow:0 1px 4px rgba(0,0,0,.85), 0 1px 10px rgba(0,0,0,.6);
+  }
+  .platform-tab.active{color:#fff; background:rgba(255,255,255,.16); backdrop-filter:blur(6px);}
+
+  /* ===== Platform identity badge — every screen, including Entertainment, ===== */
+  /* ===== now visibly declares which of the 4 platforms it is.            ===== */
+  .platform-badge{
+    flex:0 0 auto; width:32px; height:32px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+    filter:drop-shadow(0 1px 4px rgba(0,0,0,.5));
+  }
+  .platform-badge.b-entertainment{background:rgba(255,110,82,.22); border:1px solid rgba(255,110,82,.4);}
+  .platform-badge.b-marketplace{background:rgba(240,96,159,.22); border:1px solid rgba(240,96,159,.4);}
+  .platform-badge.b-workspace{background:rgba(76,136,224,.22); border:1px solid rgba(76,136,224,.4);}
+  .platform-badge.b-gaming{background:rgba(108,99,255,.22); border:1px solid rgba(108,99,255,.4);}
+
+  /* ===== Atmosphere — each platform gets its own color wash so switching ===== */
+  /* ===== reads as changing environments, not swapping a text column.    ===== */
+  #view-marketplace .platform-body{ background:radial-gradient(ellipse at 20% 0%, rgba(240,96,159,.10), transparent 55%); }
+  #view-workspace .platform-body{ background:radial-gradient(ellipse at 20% 0%, rgba(76,136,224,.10), transparent 55%); }
+  #view-gaming .platform-body{ background:radial-gradient(ellipse at 20% 0%, rgba(108,99,255,.10), transparent 55%); }
+
+  /* ===== Service-category identity strip (Workspace) ===== */
+  .service-chips{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px;}
+  .service-chip{
+    display:flex; align-items:center; gap:5px;
+    padding:7px 12px; border-radius:12px; font-size:11.5px; font-weight:600;
+    background:rgba(76,136,224,.12); border:1px solid rgba(76,136,224,.25); color:#BFD6F7;
+  }
+
+  /* ===== Marketplace shopping-atmosphere strip ===== */
+  .deal-ribbon{
+    display:flex; align-items:center; gap:8px;
+    background:linear-gradient(90deg, rgba(240,96,159,.18), rgba(240,96,159,.04));
+    border:1px solid rgba(240,96,159,.3); border-radius:12px;
+    padding:9px 13px; font-size:12px; font-weight:600; color:#FBC0DE;
+    margin-bottom:16px;
+  }
+  .cat-chips{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px;}
+  .cat-chip{
+    padding:7px 12px; border-radius:12px; font-size:11.5px; font-weight:600;
+    background:rgba(240,96,159,.12); border:1px solid rgba(240,96,159,.25); color:#FBC0DE;
+  }
+
+  /* ===== Cross-platform discovery — the loop: Entertainment → Marketplace ===== */
+  /* ===== → Workspace → Gaming → Entertainment. Real, tappable, not decorative. ===== */
+  .discover-card{
+    display:flex; align-items:center; gap:16px;
+    padding:18px; border-radius:20px; margin-top:22px; cursor:pointer;
+    background:linear-gradient(120deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+    border:1.5px solid rgba(255,255,255,.14);
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    transition:transform .12s, background .4s ease, border-color .4s ease, box-shadow .4s ease;
+  }
+  .discover-card:active{transform:scale(.98);}
+  .discover-card .d-icon{
+    width:52px; height:52px; border-radius:16px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:26px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+    transition:background .4s ease;
+  }
+  .discover-card .d-copy{flex:1; min-width:0;}
+  .discover-card .d-eyebrow{
+    font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase;
+    display:flex; align-items:center; gap:6px;
+  }
+  .discover-card .d-eyebrow::before{
+    content:''; width:6px; height:6px; border-radius:50%; background:currentColor;
+    box-shadow:0 0 8px currentColor;
+  }
+  .discover-card .d-title{font-size:16px; font-weight:800; color:var(--text-hi); margin-top:4px; line-height:1.3;}
+  .discover-card .d-arrow{flex:0 0 auto; opacity:.6; font-size:18px;}
+
+  /* ===== Transform transition — a brief color-flash + scale/fade so switching ===== */
+  /* ===== platforms feels like moving through the shell, not a tab swap.      ===== */
+  .platform-view{
+    animation:pv-enter .38s ease-out;
+  }
+  @keyframes pv-enter{
+    from{ opacity:0; transform:scale(.97); }
+    to{ opacity:1; transform:scale(1); }
+  }
+  .transform-flash{
+    position:absolute; inset:0; z-index:150;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .transform-flash.show{opacity:1; transition:opacity .05s ease;}
+
+  .platform-body{
+    flex:1 1 auto; overflow-y:auto; padding:96px 16px 100px;
+  }
+  /* Tip's position is intentionally identical on every platform — top:31%,
+     left:14px, same as Entertainment — per explicit requirement: no jumping
+     between platforms. Content top-padding above is increased instead, so
+     the fixed Tip position never collides with page content. */
+  .platform-hero{
+    font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--text-hi);
+    margin-bottom:4px;
+  }
+  .platform-sub{font-size:12.5px; color:var(--text-mid); margin-bottom:18px;}
+
+  .pgrid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .pcard{
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:8px;
+  }
+  .pcard .pcard-thumb{
+    height:64px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .pcard .pcard-title{font-size:12.5px; font-weight:600; color:var(--text-hi);}
+  .pcard .pcard-sub{font-size:11px; color:var(--text-mid);}
+
+  .prow{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+    border-radius:14px; padding:12px; margin-bottom:10px;
+  }
+  .prow .pavatar{
+    width:42px; height:42px; border-radius:50%; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .prow .prow-name{font-size:13px; font-weight:600; color:var(--text-hi);}
+  .prow .prow-sub{font-size:11.5px; color:var(--text-mid); margin-top:1px;}
+  .prow .prow-cta{
+    margin-left:auto; font-size:11px; font-weight:700; padding:6px 12px; border-radius:10px;
+    color:#101820; white-space:nowrap;
+  }
+
+  /* ===== AI OVERLAY (per Volume 1 §9 — "AI does NOT switch platform, opens overlay") ===== */
+  .ai-overlay{
+    position:absolute; inset:0; z-index:200;
+    background:rgba(4,6,10,.6); backdrop-filter:blur(3px);
+    display:flex; align-items:flex-end;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .ai-overlay.show{opacity:1; pointer-events:auto;}
+  .ai-sheet{
+    width:100%; max-height:72%;
+    background:#141826; border-radius:22px 22px 0 0;
+    border:1px solid rgba(255,255,255,.08);
+    padding:18px 18px 22px;
+    transform:translateY(16px);
+    transition:transform .25s ease;
+    display:flex; flex-direction:column; gap:14px;
+    overflow:hidden;
+  }
+  .ai-overlay.show .ai-sheet{transform:translateY(0);}
+  .ai-sheet-head{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+  .ai-sheet-body{
+    flex:1 1 auto; min-height:0;
+    display:flex; flex-direction:column; gap:14px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+    margin:0 -18px; padding:0 18px 4px;
+  }
+  .ai-sheet-head .ai-title{font-family:var(--font-display); font-weight:700; font-size:15px; color:#fff; flex:1;}
+  .ai-close{
+    width:28px; height:28px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(255,255,255,.08); color:#fff; font-size:15px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ai-context{font-size:12px; color:var(--text-mid);}
+  .ai-chips{display:flex; flex-wrap:wrap; gap:7px;}
+  .ai-chip{
+    padding:6px 12px; border-radius:12px; font-size:11.5px; font-weight:600;
+    background:rgba(255,255,255,.06); color:var(--text-mid); border:1px solid rgba(255,255,255,.08);
+  }
+  .ai-chip.active{background:var(--gold-dim); color:var(--gold); border-color:transparent;}
+  .ai-input-row{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.06); border-radius:14px; padding:10px 12px;
+  }
+  .ai-input-row input{
+    flex:1; background:none; border:none; outline:none; color:#fff; font-size:13px; font-family:var(--font-body);
+  }
+  .ai-input-row input::placeholder{color:var(--text-low);}
+  .ai-send{
+    width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--gold); color:#1a1210; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ===== Multi-AI Gateway provider selector — Vol.6 §4 ===== */
+  .provider-select{position:relative;}
+  .provider-select-label{font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-low); margin-bottom:6px;}
+  .provider-btn{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1); border-radius:12px;
+    padding:10px 12px; cursor:pointer; font-family:var(--font-body); font-weight:700; font-size:13px; color:#fff;
+  }
+  .provider-btn .cur{display:flex; align-items:center; gap:8px;}
+  .provider-btn .avail-dot{width:7px; height:7px; border-radius:50%; background:#2ecc71; flex:0 0 auto;}
+  .provider-btn svg{color:var(--text-mid); transition:transform .2s ease;}
+  .provider-select.open .provider-btn svg{transform:rotate(180deg);}
+  .provider-list{
+    display:none; margin-top:6px; background:#1b2032; border:1px solid rgba(255,255,255,.1); border-radius:12px; overflow:hidden;
+  }
+  .provider-select.open .provider-list{display:block;}
+  .provider-opt{
+    display:block; width:100%; text-align:left; padding:10px 13px; border:none; background:none; cursor:pointer;
+    font-size:12.5px; color:var(--text-hi); border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .provider-opt:last-child{border-bottom:none;}
+  .provider-opt:hover{background:rgba(255,255,255,.06);}
+  .provider-opt.selected{color:var(--gold); font-weight:700;}
+
+  /* ===== Spec Sheet — document-cited content for every nav button, Vol.2-5 §3 destinations ===== */
+  .spec-cite{
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10px;
+    color:#1a1210; background:var(--gold); padding:4px 10px 4px 8px; border-radius:999px; align-self:flex-start;
+  }
+  .spec-lede{font-size:12.5px; line-height:1.55; color:var(--text-mid);}
+  .spec-list{display:flex; flex-direction:column; gap:1px; background:rgba(255,255,255,.06); border-radius:14px;}
+  .spec-row{display:flex; align-items:center; gap:11px; padding:11px 13px; background:#161b29;}
+  .spec-row:first-child{border-radius:14px 14px 0 0;}
+  .spec-row:last-child{border-radius:0 0 14px 14px;}
+  .spec-row:only-child{border-radius:14px;}
+  .spec-row .dot{width:6px; height:6px; border-radius:50%; background:var(--gold); flex:0 0 auto;}
+  .spec-row span.txt{font-size:13px; color:var(--text-hi); font-weight:500;}
+  .spec-note{display:flex; gap:9px; align-items:flex-start; background:rgba(255,255,255,.05); border-radius:12px; padding:11px 12px; font-size:11.5px; line-height:1.55; color:var(--text-mid);}
+
+  /* ===== My CITYLUXOS hub — Vol.6 §11, consolidates Profile/Settings/Wallet/Notifications/AI ===== */
+  .hub-link{
+    display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left;
+    padding:13px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); background:#161b29;
+    cursor:pointer; margin-bottom:8px;
+  }
+  .hub-link .hl-main{display:flex; align-items:center; gap:11px;}
+  .hub-link .hl-ic{
+    width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.07);
+    display:flex; align-items:center; justify-content:center; color:var(--gold); flex:0 0 auto;
+  }
+  .hub-link .hl-name{font-size:13.5px; font-weight:700; color:#fff;}
+  .hub-link .hl-sub{font-size:11px; color:var(--text-mid); margin-top:1px;}
+
+  /* ===== Quick Tip Panel — opens on Tip CLC tap (per spec: Recipient, ===== */
+  /* ===== Preset Amounts, Custom Amount, Message, Balance, USD, Send)  ===== */
+  .tip-recipient{display:flex; align-items:center; gap:11px;}
+  .tip-recipient .tr-avatar{
+    width:42px; height:42px; border-radius:50%; flex:0 0 auto;
+    background:linear-gradient(135deg,#2ecc71,#27ae60);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; font-size:15px; color:#0c1a10;
+  }
+  .tip-recipient .tr-name{font-size:14px; font-weight:700; color:#fff;}
+  .tip-recipient .tr-sub{font-size:11.5px; color:var(--text-mid); margin-top:1px;}
+  .tip-presets{display:flex; gap:8px;}
+  .tip-preset{
+    flex:1; padding:10px 0; border-radius:12px; text-align:center; cursor:pointer;
+    background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+    font-family:var(--font-mono); font-weight:700; font-size:13px; color:#fff;
+    transition:background .15s, border-color .15s;
+  }
+  .tip-preset.active{background:var(--gold-dim); border-color:var(--gold); color:var(--gold);}
+  .tip-custom-row{display:flex; align-items:center; gap:8px;}
+  .tip-custom-row input[type="number"]{
+    flex:1; background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+    border-radius:12px; padding:10px 12px; color:#fff; font-family:var(--font-mono);
+    font-size:14px; outline:none;
+  }
+  .tip-custom-row input[type="number"]:focus{border-color:var(--gold);}
+  .tip-usd{font-size:11.5px; color:var(--text-mid);}
+  .tip-usd b{color:var(--text-hi);}
+  .tip-message input{
+    width:100%; background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+    border-radius:12px; padding:10px 12px; color:#fff; font-size:12.5px; outline:none;
+  }
+  .tip-message input:focus{border-color:var(--gold);}
+  .tip-message input::placeholder{color:var(--text-low);}
+  .tip-balance-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11.5px; color:var(--text-mid); padding-top:2px;
+  }
+  .tip-balance-row b{color:var(--text-hi); font-family:var(--font-mono);}
+  .tip-send-btn{
+    width:100%; padding:13px; border-radius:14px; border:none; cursor:pointer;
+    background:linear-gradient(135deg,#2ecc71,#27ae60); color:#0c1a10;
+    font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; gap:7px;
+  }
+
+  /* ===== Universal Search — automatically searches within the active ===== */
+  /* ===== platform context (Volume 6 §2). One of only 3 ways to switch ===== */
+  /* ===== platforms, alongside the Quad and Universal Discovery.       ===== */
+  .search-input-row{
+    display:flex; align-items:center; gap:9px;
+    background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+    border-radius:14px; padding:11px 14px;
+  }
+  .search-input-row svg{flex:0 0 auto; opacity:.6;}
+  .search-input-row input{
+    flex:1; background:none; border:none; outline:none; color:#fff; font-size:14px; font-family:var(--font-body);
+  }
+  .search-input-row input::placeholder{color:var(--text-low);}
+  .search-scope-chips{display:flex; flex-wrap:wrap; gap:7px;}
+  .search-scope-chip{
+    padding:7px 12px; border-radius:12px; font-size:11.5px; font-weight:600; cursor:pointer;
+    background:rgba(255,255,255,.06); color:var(--text-mid); border:1px solid rgba(255,255,255,.1);
+  }
+  .search-switch-row{
+    display:flex; align-items:center; gap:10px;
+    padding:11px 13px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09);
+  }
+  .search-switch-row .ssw-icon{font-size:16px; flex:0 0 auto;}
+  .search-switch-row .ssw-text{flex:1; font-size:12px; color:var(--text-mid);}
+  .search-switch-row .ssw-text b{color:var(--text-hi);}
+
+  .toast{
+    position:absolute; left:50%; bottom:150px; z-index:100;
+    transform:translateX(-50%) translateY(10px);
+    background:rgba(20,20,30,.92); backdrop-filter:blur(8px);
+    color:#fff; font-size:13px; font-weight:600;
+    padding:10px 18px; border-radius:20px;
+    white-space:nowrap;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .empty-state{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; gap:8px; text-align:center; padding:0 40px;
+    color:var(--text-mid);
+  }
+  .empty-state .emoji{font-size:32px;}
+  .empty-state .title{font-size:15px; font-weight:600; color:var(--text-hi);}
+  .empty-state .sub{font-size:12.5px;}
+</style>
+</head>
+<body>
+
+<div class="device">
+
+<div class="platform-view" id="view-entertainment">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="platform-badge b-entertainment" title="Entertainment">🎬</div>
+    <nav class="focus-tabs" id="focusTabs">
+      <button class="focus-tab active" data-mode="Videos">Videos</button>
+      <button class="focus-tab" data-mode="Stories">Stories</button>
+      <button class="focus-tab" data-mode="Live">Live</button>
+      <button class="focus-tab" data-mode="Learning">Learning</button>
+    </nav>
+    <button class="search-pill" title="Search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+    <div class="tv-btn" title="Cast">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 3l4 4 4-4"/></svg>
+    </div>
+    <div class="sound-wrap">
+      <div class="sound-label" id="soundLabel"></div>
+      <div class="sound-badge" id="soundBadge" title="Featured Sound">
+        <svg viewBox="0 0 30 30">
+          <circle cx="15" cy="15" r="14" fill="#1C1C1C"/>
+          <circle cx="15" cy="15" r="14" fill="none" stroke="#333" stroke-width="0.6"/>
+          <circle cx="15" cy="15" r="10.5" fill="none" stroke="#333" stroke-width="0.5"/>
+          <circle cx="15" cy="15" r="7.5" fill="none" stroke="#333" stroke-width="0.5"/>
+          <circle cx="15" cy="15" r="6" fill="url(#discGrad)"/>
+          <path d="M13.3 11.5v6.3a2 2 0 1 0 1.1 1.8v-5.4l3.6-1v3.6a2 2 0 1 0 1.1 1.8V11l-5.8 1.6z" fill="#fff"/>
+          <defs>
+            <linearGradient id="discGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#E2402C" id="discStop1"/>
+              <stop offset="1" stop-color="#B5271A" id="discStop2"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-wrap">
+
+    <!-- LEFT EDGE -->
+    <button class="tip-edge" title="Tip">
+      <span class="gem">💎</span>
+      <span class="amt">50</span>
+      <span class="lbl">Tip</span>
+    </button>
+
+    <!-- RIGHT EDGE : THE QUAD -->
+    <div class="quad-edge">
+      <button class="quad-btn" title="Marketplace">
+        <svg viewBox="0 0 36 36" width="26" height="26">
+          <!-- back bag: pink body, green handle -->
+          <path d="M14.5 15.5h15l-1.1 13.2a2.1 2.1 0 0 1-2.1 1.9H17.7a2.1 2.1 0 0 1-2.1-1.9Z" fill="#F0609F"/>
+          <path d="M17.6 15.5v-2.6a3.7 3.7 0 0 1 7.4 0v2.6" fill="none" stroke="#7CC576" stroke-width="1.8" stroke-linecap="round"/>
+          <rect x="19.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+          <rect x="22.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+          <rect x="25.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+          <path d="M27 16.5 25.9 29.6h1.4a2.1 2.1 0 0 0 2.1-1.9l1.1-11.2Z" fill="#C9457A" opacity=".55"/>
+          <!-- front bag: green body, pink handle -->
+          <path d="M5.5 19.5h11l-.85 8.9a1.7 1.7 0 0 1-1.7 1.6H8.05a1.7 1.7 0 0 1-1.7-1.6Z" fill="#8FCB7A"/>
+          <path d="M7.9 19.5v-1.9a3 3 0 0 1 6 0v1.9" fill="none" stroke="#F080AE" stroke-width="1.6" stroke-linecap="round"/>
+          <rect x="9.2" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+          <rect x="11.6" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+          <rect x="14" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+        </svg>
+        <span class="quad-badge">3</span>
+      </button>
+      <button class="quad-btn workspace-btn" title="Workspace">
+        <svg viewBox="0 0 36 36" width="24" height="24">
+          <circle cx="18" cy="18" r="17" fill="#4C88E0"/>
+          <ellipse cx="18" cy="18" rx="7.5" ry="17" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+          <ellipse cx="18" cy="18" rx="17" ry="7.5" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+          <line x1="1" y1="18" x2="35" y2="18" stroke="#F2F6FB" stroke-width="1.6"/>
+          <line x1="18" y1="1" x2="18" y2="35" stroke="#F2F6FB" stroke-width="1.6"/>
+          <path d="M4 11h28M4 25h28" stroke="#F2F6FB" stroke-width="1.6" fill="none"/>
+          <circle cx="18" cy="18" r="17" fill="none" stroke="#2C6BAE" stroke-width="1"/>
+        </svg>
+        <span class="quad-badge">1</span>
+      </button>
+      <button class="quad-btn" title="Play Games">
+        <svg viewBox="0 0 36 36" width="34" height="34">
+          <rect x="1.5" y="1.5" width="33" height="33" rx="11" fill="#6E4CF5"/>
+          <path d="M11 25.5c-1.6 1.7-4.4 1.1-5.1-1.1l-1.4-6.9A5 5 0 0 1 9.4 11.6h17.2a5 5 0 0 1 4.9 5.9l-1.4 6.9c-.7 2.2-3.5 2.8-5.1 1.1L22.6 23H13.4Z" fill="#FFFFFF"/>
+          <path d="M11.4 17.4h4.6M13.7 15.1v4.6" stroke="#6E4CF5" stroke-width="1.9" stroke-linecap="round"/>
+          <circle cx="24.3" cy="15.6" r="1.6" fill="#6E4CF5"/>
+          <circle cx="27.4" cy="17.2" r="1.6" fill="#6E4CF5"/>
+          <circle cx="24.3" cy="18.8" r="1.6" fill="#6E4CF5" opacity=".6"/>
+          <circle cx="21.2" cy="17.2" r="1.6" fill="#6E4CF5" opacity=".6"/>
+        </svg>
+        <span class="quad-badge">5</span>
+      </button>
+      <button class="quad-btn ai-btn" title="AI Assistant">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="50" cy="52" rx="42" ry="38" fill="#F5EDE4"/>
+          <path d="M 8 52 Q 8 15 50 15 Q 92 15 92 52" fill="#D4652A"/>
+          <ellipse cx="32" cy="28" rx="14" ry="5" fill="#E8884A" opacity="0.5"/>
+          <line x1="50" y1="15" x2="50" y2="4" stroke="#D4652A" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="50" cy="4" r="5" fill="#D4652A"/>
+          <circle cx="48" cy="2" r="1.5" fill="#E8884A" opacity="0.7"/>
+          <ellipse cx="10" cy="50" rx="7" ry="9" fill="#D4652A"/>
+          <ellipse cx="90" cy="50" rx="7" ry="9" fill="#D4652A"/>
+          <ellipse cx="50" cy="54" rx="28" ry="18" fill="#C084D4"/>
+          <ellipse cx="50" cy="54" rx="24" ry="15" fill="#1A1A2E"/>
+          <ellipse cx="58" cy="50" rx="7" ry="2.5" fill="#2A2A4E" opacity="0.5"/>
+          <circle cx="40" cy="54" r="5" fill="#FFFFFF"/>
+          <circle cx="60" cy="54" r="5" fill="#FFFFFF"/>
+          <circle cx="40" cy="54" r="1.5" fill="#1A1A2E"/>
+          <circle cx="60" cy="54" r="1.5" fill="#1A1A2E"/>
+          <path d="M 45 64 Q 50 67 55 64" stroke="#E8A0C8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="quad-badge">2</span>
+      </button>
+    </div>
+
+    <!-- FEED -->
+    <div class="feed">
+
+      <div class="post" data-modes="videos" data-sound="Midnight Rooftop — DJ Vela" data-c1="#E2402C" data-c2="#B5271A">
+        <div class="media"><div class="media-mark">◆ POST IMAGE ◆</div></div>
+        <div class="post-header">
+          <div class="avatar-ring"><div class="inner">RV</div></div>
+          <div class="who">
+            <div class="name">renata.void <span class="badge">L12</span></div>
+            <div class="sub">Neon District · Node 4</div>
+          </div>
+          <div class="more">⋯</div>
+        </div>
+        <div class="post-footer">
+        <div class="actions">
+          <button class="a-btn like">
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#E9EDF1"><path d="M12 21S2.6 15 1 9.7C-0.4 5 2.2 1.2 6.4 1.2c2.3 0 4.2 1.3 5.6 3.2 1.4-1.9 3.3-3.2 5.6-3.2 4.2 0 6.8 3.8 5.4 8.5C21.4 15 12 21 12 21z"/></svg>
+            <span>45.9K</span>
+          </button>
+          <button class="a-btn">
+            <svg width="22" height="20" viewBox="0 0 24 22"><path d="M3 4h18v12H9l-5 4V16H3z" fill="#E9EDF1"/><circle cx="8" cy="10" r="1.3" fill="#3C1622"/><circle cx="12" cy="10" r="1.3" fill="#3C1622"/><circle cx="16" cy="10" r="1.3" fill="#3C1622"/></svg>
+            <span>128</span>
+          </button>
+          <button class="a-btn">
+            <span class="sq-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <span>856</span>
+          </button>
+          <button class="a-btn tip" title="Tip">🔖</button>
+        </div>
+        <div class="likes"><span class="amt">45.9K</span> likes</div>
+        <div class="caption"><b>renata.void</b>friday night at the concourse rooftop, the whole block showed up ⚡</div>
+        <div class="comments-link">View all 96 comments</div>
+        <div class="timestamp">2 hours ago</div>
+        </div>
+      </div>
+
+      <div class="post" data-modes="stories" data-sound="Build Mode — kato.exe" data-c1="#3E8ED9" data-c2="#1F5A94">
+        <div class="media"><div class="media-mark">◆ POST IMAGE ◆</div></div>
+        <div class="post-header">
+          <div class="avatar-ring"><div class="inner">KT</div></div>
+          <div class="who">
+            <div class="name">kato.exe <span class="badge">L07</span></div>
+            <div class="sub">Marketplace Guild</div>
+          </div>
+          <div class="more">⋯</div>
+        </div>
+        <div class="post-footer">
+        <div class="actions">
+          <button class="a-btn like">
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#E9EDF1"><path d="M12 21S2.6 15 1 9.7C-0.4 5 2.2 1.2 6.4 1.2c2.3 0 4.2 1.3 5.6 3.2 1.4-1.9 3.3-3.2 5.6-3.2 4.2 0 6.8 3.8 5.4 8.5C21.4 15 12 21 12 21z"/></svg>
+            <span>45.9K</span>
+          </button>
+          <button class="a-btn">
+            <svg width="22" height="20" viewBox="0 0 24 22"><path d="M3 4h18v12H9l-5 4V16H3z" fill="#E9EDF1"/><circle cx="8" cy="10" r="1.3" fill="#3C1622"/><circle cx="12" cy="10" r="1.3" fill="#3C1622"/><circle cx="16" cy="10" r="1.3" fill="#3C1622"/></svg>
+            <span>128</span>
+          </button>
+          <button class="a-btn">
+            <span class="sq-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <span>856</span>
+          </button>
+          <button class="a-btn tip" title="Tip">🔖</button>
+        </div>
+        <div class="likes"><span class="amt">842</span> likes</div>
+        <div class="caption"><b>kato.exe</b>dropped a new build in the workspace, link in bio <span class="muted">#devlog</span></div>
+        <div class="comments-link">View all 41 comments</div>
+        <div class="timestamp">5 hours ago</div>
+        </div>
+      </div>
+
+      <div class="post" data-modes="live" data-sound="Live Set — nova.stream" data-c1="#E2402C" data-c2="#8E1C1C">
+        <div class="media"><div class="media-mark">◆ POST IMAGE ◆</div></div>
+        <div class="post-header">
+          <div class="avatar-ring"><div class="inner">NS</div></div>
+          <div class="who">
+            <div class="name">nova.stream <span class="badge">LIVE</span></div>
+            <div class="sub">1.2K watching</div>
+          </div>
+          <div class="more">⋯</div>
+        </div>
+        <div class="post-footer">
+        <div class="actions">
+          <button class="a-btn like">
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#E9EDF1"><path d="M12 21S2.6 15 1 9.7C-0.4 5 2.2 1.2 6.4 1.2c2.3 0 4.2 1.3 5.6 3.2 1.4-1.9 3.3-3.2 5.6-3.2 4.2 0 6.8 3.8 5.4 8.5C21.4 15 12 21 12 21z"/></svg>
+            <span>12.3K</span>
+          </button>
+          <button class="a-btn">
+            <svg width="22" height="20" viewBox="0 0 24 22"><path d="M3 4h18v12H9l-5 4V16H3z" fill="#E9EDF1"/><circle cx="8" cy="10" r="1.3" fill="#3C1622"/><circle cx="12" cy="10" r="1.3" fill="#3C1622"/><circle cx="16" cy="10" r="1.3" fill="#3C1622"/></svg>
+            <span>340</span>
+          </button>
+          <button class="a-btn">
+            <span class="sq-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <span>210</span>
+          </button>
+          <button class="a-btn tip" title="Tip">🔖</button>
+        </div>
+        <div class="likes"><span class="amt">12.3K</span> likes</div>
+        <div class="caption"><b>nova.stream</b>going live from the studio — taking song requests 🎧</div>
+        <div class="comments-link">View all 512 comments</div>
+        <div class="timestamp">Live now</div>
+        </div>
+      </div>
+
+      <div class="post" data-modes="learning" data-sound="Study Lo-fi — prof.lyra" data-c1="#3FB6A8" data-c2="#1F6B62">
+        <div class="media"><div class="media-mark">◆ POST IMAGE ◆</div></div>
+        <div class="post-header">
+          <div class="avatar-ring"><div class="inner">PL</div></div>
+          <div class="who">
+            <div class="name">prof.lyra <span class="badge">L20</span></div>
+            <div class="sub">Concourse Academy</div>
+          </div>
+          <div class="more">⋯</div>
+        </div>
+        <div class="post-footer">
+        <div class="actions">
+          <button class="a-btn like">
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#E9EDF1"><path d="M12 21S2.6 15 1 9.7C-0.4 5 2.2 1.2 6.4 1.2c2.3 0 4.2 1.3 5.6 3.2 1.4-1.9 3.3-3.2 5.6-3.2 4.2 0 6.8 3.8 5.4 8.5C21.4 15 12 21 12 21z"/></svg>
+            <span>8.1K</span>
+          </button>
+          <button class="a-btn">
+            <svg width="22" height="20" viewBox="0 0 24 22"><path d="M3 4h18v12H9l-5 4V16H3z" fill="#E9EDF1"/><circle cx="8" cy="10" r="1.3" fill="#3C1622"/><circle cx="12" cy="10" r="1.3" fill="#3C1622"/><circle cx="16" cy="10" r="1.3" fill="#3C1622"/></svg>
+            <span>76</span>
+          </button>
+          <button class="a-btn">
+            <span class="sq-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <span>190</span>
+          </button>
+          <button class="a-btn tip" title="Tip">🔖</button>
+        </div>
+        <div class="likes"><span class="amt">8.1K</span> likes</div>
+        <div class="caption"><b>prof.lyra</b>3-minute breakdown of how the Quad's badge system works 🎓</div>
+        <div class="comments-link">View all 76 comments</div>
+        <div class="timestamp">1 day ago</div>
+        </div>
+      </div>
+
+      <div class="post" data-modes="videos" data-sound="Newsroom Theme — CityLuxOs" data-c1="#D9A64B" data-c2="#8A6423">
+        <div class="media"><div class="media-mark">◆ POST IMAGE ◆</div></div>
+        <div class="post-header">
+          <div class="avatar-ring"><div class="inner">CN</div></div>
+          <div class="who">
+            <div class="name">cityluxos.news <span class="badge">L30</span></div>
+            <div class="sub">Official</div>
+          </div>
+          <div class="more">⋯</div>
+        </div>
+        <div class="post-footer">
+        <div class="actions">
+          <button class="a-btn like">
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#E9EDF1"><path d="M12 21S2.6 15 1 9.7C-0.4 5 2.2 1.2 6.4 1.2c2.3 0 4.2 1.3 5.6 3.2 1.4-1.9 3.3-3.2 5.6-3.2 4.2 0 6.8 3.8 5.4 8.5C21.4 15 12 21 12 21z"/></svg>
+            <span>21.4K</span>
+          </button>
+          <button class="a-btn">
+            <svg width="22" height="20" viewBox="0 0 24 22"><path d="M3 4h18v12H9l-5 4V16H3z" fill="#E9EDF1"/><circle cx="8" cy="10" r="1.3" fill="#3C1622"/><circle cx="12" cy="10" r="1.3" fill="#3C1622"/><circle cx="16" cy="10" r="1.3" fill="#3C1622"/></svg>
+            <span>903</span>
+          </button>
+          <button class="a-btn">
+            <span class="sq-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+            </span>
+            <span>1.1K</span>
+          </button>
+          <button class="a-btn tip" title="Tip">🔖</button>
+        </div>
+        <div class="likes"><span class="amt">21.4K</span> likes</div>
+        <div class="caption"><b>cityluxos.news</b>Quad v3.2 rolls out platform-wide starting today 📰</div>
+        <div class="comments-link">View all 903 comments</div>
+        <div class="timestamp">3 hours ago</div>
+        </div>
+      </div>
+
+      <div class="discover-card" data-cycle='["marketplace","workspace","gaming"]' style="margin:16px;">
+        <div class="d-icon"></div>
+        <div class="d-copy">
+          <div class="d-eyebrow">Discover</div>
+          <div class="d-title"></div>
+        </div>
+        <div class="d-arrow">→</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottomnav">
+    <button class="nav-item active" data-screen="Feed">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="6.5" rx="1.6"/><rect x="3" y="13.5" width="12" height="2" rx="1"/><rect x="3" y="17.5" width="17" height="2" rx="1"/></svg></span>
+      Feed
+    </button>
+    <button class="nav-item" data-screen="Explore">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.3 8.7 13 13l-4.3 2.3L11 11Z"/></svg></span>
+      Explore
+    </button>
+    <button class="nav-item create" data-screen="Create">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+    </button>
+    <button class="nav-item" data-screen="Chats">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.8h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H9.2L5 20.5V17H4a1 1 0 0 1-1-1V6.8a1 1 0 0 1 1-1Z"/><circle cx="8.3" cy="11.3" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.3" r=".9" fill="currentColor" stroke="none"/><circle cx="15.7" cy="11.3" r=".9" fill="currentColor" stroke="none"/></svg></span>
+      Chats
+    </button>
+    <button class="nav-item" data-screen="My CITYLUXOS">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"/></svg></span>
+      My CITYLUXOS
+    </button>
+  </div>
+</div>
+<!-- /view-entertainment -->
+
+<!-- ============ MARKETPLACE ============ -->
+<div class="platform-view pv-hidden" id="view-marketplace">
+  <div class="topbar">
+    <div class="platform-badge b-marketplace" title="Marketplace">🛍️</div>
+    <nav class="platform-tabs">
+      <button class="platform-tab active">Products</button>
+      <button class="platform-tab">Worldwide</button>
+      <button class="platform-tab">Manufacturers</button>
+    </nav>
+    <button class="search-pill" title="Search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+  </div>
+  <div class="platform-body">
+    <div class="platform-hero">Marketplace</div>
+    <div class="platform-sub">Global commerce — products, stores, and deals from across CityLuxOs.</div>
+    <div class="deal-ribbon">🔥 Flash Sale — up to 40% off, ends in 6h</div>
+    <div class="cat-chips">
+      <span class="cat-chip">Electronics</span>
+      <span class="cat-chip">Fashion</span>
+      <span class="cat-chip">Home</span>
+      <span class="cat-chip">Beauty</span>
+      <span class="cat-chip">Deals</span>
+    </div>
+    <div class="pgrid">
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(240,96,159,.15)">🛍️</div><div class="pcard-title">Studio Headphones</div><div class="pcard-sub">120 CLC · Concourse Audio</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(240,96,159,.15)">👟</div><div class="pcard-title">Runner Sneakers</div><div class="pcard-sub">85 CLC · Node 4 Footwear</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(240,96,159,.15)">🪴</div><div class="pcard-title">Desk Plant Set</div><div class="pcard-sub">22 CLC · Green District</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(240,96,159,.15)">⌚</div><div class="pcard-title">Smart Band</div><div class="pcard-sub">64 CLC · TimeWorks</div></div>
+    </div>
+    <div class="discover-card" data-cycle='["workspace","gaming","entertainment"]'>
+      <div class="d-icon"></div>
+      <div class="d-copy">
+        <div class="d-eyebrow">Discover</div>
+        <div class="d-title"></div>
+      </div>
+      <div class="d-arrow">→</div>
+    </div>
+  </div>
+  <div class="tip-edge" title="Tip">
+    <span class="gem">💎</span>
+    <span class="amt">50</span>
+    <span class="lbl">Tip</span>
+  </div>
+  <div class="quad-edge">
+    <button class="quad-btn" title="Entertainment">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <ellipse cx="15.5" cy="20" rx="14.5" ry="15.5" fill="#B9332A" transform="rotate(-18 15.5 20)"/>
+        <ellipse cx="19.5" cy="16.3" rx="14.5" ry="15.5" fill="#F0553F" transform="rotate(-18 19.5 16.3)"/>
+        <path d="M14.6 10.6 14.6 25.3 16 25.3 16 11.3Z" fill="#CBD0D6"/>
+        <path d="M16 11 27.2 17.3 16 25.4Z" fill="#FFFFFF"/>
+      </svg>
+    <span class="quad-badge">4</span>
+    </button>
+    <button class="quad-btn workspace-btn" title="Workspace">
+      <svg viewBox="0 0 36 36" width="24" height="24">
+        <circle cx="18" cy="18" r="17" fill="#4C88E0"/>
+        <ellipse cx="18" cy="18" rx="7.5" ry="17" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+        <ellipse cx="18" cy="18" rx="17" ry="7.5" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+        <line x1="1" y1="18" x2="35" y2="18" stroke="#F2F6FB" stroke-width="1.6"/>
+        <line x1="18" y1="1" x2="18" y2="35" stroke="#F2F6FB" stroke-width="1.6"/>
+        <path d="M4 11h28M4 25h28" stroke="#F2F6FB" stroke-width="1.6" fill="none"/>
+        <circle cx="18" cy="18" r="17" fill="none" stroke="#2C6BAE" stroke-width="1"/>
+      </svg>
+    <span class="quad-badge">1</span>
+    </button>
+    <button class="quad-btn" title="Play Games">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <rect x="1.5" y="1.5" width="33" height="33" rx="11" fill="#6E4CF5"/>
+        <path d="M11 25.5c-1.6 1.7-4.4 1.1-5.1-1.1l-1.4-6.9A5 5 0 0 1 9.4 11.6h17.2a5 5 0 0 1 4.9 5.9l-1.4 6.9c-.7 2.2-3.5 2.8-5.1 1.1L22.6 23H13.4Z" fill="#FFFFFF"/>
+        <path d="M11.4 17.4h4.6M13.7 15.1v4.6" stroke="#6E4CF5" stroke-width="1.9" stroke-linecap="round"/>
+        <circle cx="24.3" cy="15.6" r="1.6" fill="#6E4CF5"/>
+        <circle cx="27.4" cy="17.2" r="1.6" fill="#6E4CF5"/>
+        <circle cx="24.3" cy="18.8" r="1.6" fill="#6E4CF5" opacity=".6"/>
+        <circle cx="21.2" cy="17.2" r="1.6" fill="#6E4CF5" opacity=".6"/>
+      </svg>
+    <span class="quad-badge">5</span>
+    </button>
+    <button class="quad-btn ai-btn" title="AI Assistant">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="52" rx="42" ry="38" fill="#F5EDE4"/>
+        <path d="M 8 52 Q 8 15 50 15 Q 92 15 92 52" fill="#D4652A"/>
+        <ellipse cx="32" cy="28" rx="14" ry="5" fill="#E8884A" opacity="0.5"/>
+        <line x1="50" y1="15" x2="50" y2="4" stroke="#D4652A" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="4" r="5" fill="#D4652A"/>
+        <circle cx="48" cy="2" r="1.5" fill="#E8884A" opacity="0.7"/>
+        <ellipse cx="10" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="90" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="50" cy="54" rx="28" ry="18" fill="#C084D4"/>
+        <ellipse cx="50" cy="54" rx="24" ry="15" fill="#1A1A2E"/>
+        <ellipse cx="58" cy="50" rx="7" ry="2.5" fill="#2A2A4E" opacity="0.5"/>
+        <circle cx="40" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="60" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="40" cy="54" r="1.5" fill="#1A1A2E"/>
+        <circle cx="60" cy="54" r="1.5" fill="#1A1A2E"/>
+        <path d="M 45 64 Q 50 67 55 64" stroke="#E8A0C8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    <span class="quad-badge">2</span>
+    </button>
+  </div>
+  <div class="bottomnav">
+    <button class="nav-item active" data-screen="Home">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1V9.5"/></svg></span>
+      Home
+    </button>
+    <button class="nav-item" data-screen="Categories">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="3.3" width="7.4" height="7.4" rx="1.4"/><rect x="13.3" y="3.3" width="7.4" height="7.4" rx="1.4"/><rect x="3.3" y="13.3" width="7.4" height="7.4" rx="1.4"/><rect x="13.3" y="13.3" width="7.4" height="7.4" rx="1.4"/></svg></span>
+      Categories
+    </button>
+    <button class="nav-item create" data-screen="Inbox">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.3 12.5h5l1.6 2.4h4.2l1.6-2.4h5"/><path d="M5 5.3h14l2.7 7.2v6a1.5 1.5 0 0 1-1.5 1.5H3.8a1.5 1.5 0 0 1-1.5-1.5v-6Z"/></svg></span>
+    </button>
+    <button class="nav-item" data-screen="Cart">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.3 11.4a2 2 0 0 0 2 1.6h7.5a2 2 0 0 0 2-1.6L20.5 8H6.2"/><circle cx="9.5" cy="20" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="20" r="1.3" fill="currentColor" stroke="none"/></svg></span>
+      Cart
+    </button>
+    <button class="nav-item" data-screen="My CITYLUXOS">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"/></svg></span>
+      My CITYLUXOS
+    </button>
+  </div>
+</div>
+<!-- /view-marketplace -->
+
+<!-- ============ WORKSPACE ============ -->
+<div class="platform-view pv-hidden" id="view-workspace">
+  <div class="topbar">
+    <div class="platform-badge b-workspace" title="Workspace">🌐</div>
+    <nav class="platform-tabs">
+      <button class="platform-tab active">Services</button>
+      <button class="platform-tab">Appointments</button>
+      <button class="platform-tab">Clients</button>
+      <button class="platform-tab">Business</button>
+    </nav>
+    <button class="search-pill" title="Search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+  </div>
+  <div class="platform-body">
+    <div class="platform-hero">Workspace</div>
+    <div class="platform-sub">Book professionals and services — hotels, clinics, studios, and more.</div>
+    <div class="service-chips">
+      <span class="service-chip">🔧 Plumber</span>
+      <span class="service-chip">⚖️ Lawyer</span>
+      <span class="service-chip">💻 Developer</span>
+      <span class="service-chip">🏨 Hotel</span>
+      <span class="service-chip">🍽️ Restaurant</span>
+      <span class="service-chip">🦷 Dentist</span>
+    </div>
+    <div class="prow"><div class="pavatar" style="background:rgba(76,136,224,.2)">💇</div><div><div class="prow-name">Node 4 Hair Studio</div><div class="prow-sub">Salon · ⭐ 4.8 · 2.1K bookings</div></div><div class="prow-cta" style="background:#4C88E0">Book</div></div>
+    <div class="prow"><div class="pavatar" style="background:rgba(76,136,224,.2)">⚖️</div><div><div class="prow-name">Vela & Partners</div><div class="prow-sub">Law Firm · ⭐ 4.9 · Consultations</div></div><div class="prow-cta" style="background:#4C88E0">Book</div></div>
+    <div class="prow"><div class="pavatar" style="background:rgba(76,136,224,.2)">🛠️</div><div><div class="prow-name">Kato Fix-It Electric</div><div class="prow-sub">Electrician · ⭐ 4.7 · Same-day</div></div><div class="prow-cta" style="background:#4C88E0">Book</div></div>
+    <div class="prow"><div class="pavatar" style="background:rgba(76,136,224,.2)">🏨</div><div><div class="prow-name">Concourse Rooftop Hotel</div><div class="prow-sub">Hospitality · ⭐ 4.6 · 340 rooms</div></div><div class="prow-cta" style="background:#4C88E0">Book</div></div>
+    <div class="discover-card" data-cycle='["marketplace","entertainment","gaming"]'>
+      <div class="d-icon"></div>
+      <div class="d-copy">
+        <div class="d-eyebrow">Discover</div>
+        <div class="d-title"></div>
+      </div>
+      <div class="d-arrow">→</div>
+    </div>
+  </div>
+  <div class="tip-edge" title="Tip">
+    <span class="gem">💎</span>
+    <span class="amt">50</span>
+    <span class="lbl">Tip</span>
+  </div>
+  <div class="quad-edge">
+    <button class="quad-btn" title="Marketplace">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <path d="M14.5 15.5h15l-1.1 13.2a2.1 2.1 0 0 1-2.1 1.9H17.7a2.1 2.1 0 0 1-2.1-1.9Z" fill="#F0609F"/>
+        <path d="M17.6 15.5v-2.6a3.7 3.7 0 0 1 7.4 0v2.6" fill="none" stroke="#7CC576" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="19.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <rect x="22.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <rect x="25.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <path d="M27 16.5 25.9 29.6h1.4a2.1 2.1 0 0 0 2.1-1.9l1.1-11.2Z" fill="#C9457A" opacity=".55"/>
+        <path d="M5.5 19.5h11l-.85 8.9a1.7 1.7 0 0 1-1.7 1.6H8.05a1.7 1.7 0 0 1-1.7-1.6Z" fill="#8FCB7A"/>
+        <path d="M7.9 19.5v-1.9a3 3 0 0 1 6 0v1.9" fill="none" stroke="#F080AE" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="9.2" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+        <rect x="11.6" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+        <rect x="14" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+      </svg>
+    <span class="quad-badge">3</span>
+    </button>
+    <button class="quad-btn" title="Entertainment">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <ellipse cx="15.5" cy="20" rx="14.5" ry="15.5" fill="#B9332A" transform="rotate(-18 15.5 20)"/>
+        <ellipse cx="19.5" cy="16.3" rx="14.5" ry="15.5" fill="#F0553F" transform="rotate(-18 19.5 16.3)"/>
+        <path d="M14.6 10.6 14.6 25.3 16 25.3 16 11.3Z" fill="#CBD0D6"/>
+        <path d="M16 11 27.2 17.3 16 25.4Z" fill="#FFFFFF"/>
+      </svg>
+    <span class="quad-badge">4</span>
+    </button>
+    <button class="quad-btn" title="Play Games">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <rect x="1.5" y="1.5" width="33" height="33" rx="11" fill="#6E4CF5"/>
+        <path d="M11 25.5c-1.6 1.7-4.4 1.1-5.1-1.1l-1.4-6.9A5 5 0 0 1 9.4 11.6h17.2a5 5 0 0 1 4.9 5.9l-1.4 6.9c-.7 2.2-3.5 2.8-5.1 1.1L22.6 23H13.4Z" fill="#FFFFFF"/>
+        <path d="M11.4 17.4h4.6M13.7 15.1v4.6" stroke="#6E4CF5" stroke-width="1.9" stroke-linecap="round"/>
+        <circle cx="24.3" cy="15.6" r="1.6" fill="#6E4CF5"/>
+        <circle cx="27.4" cy="17.2" r="1.6" fill="#6E4CF5"/>
+        <circle cx="24.3" cy="18.8" r="1.6" fill="#6E4CF5" opacity=".6"/>
+        <circle cx="21.2" cy="17.2" r="1.6" fill="#6E4CF5" opacity=".6"/>
+      </svg>
+    <span class="quad-badge">5</span>
+    </button>
+    <button class="quad-btn ai-btn" title="AI Assistant">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="52" rx="42" ry="38" fill="#F5EDE4"/>
+        <path d="M 8 52 Q 8 15 50 15 Q 92 15 92 52" fill="#D4652A"/>
+        <ellipse cx="32" cy="28" rx="14" ry="5" fill="#E8884A" opacity="0.5"/>
+        <line x1="50" y1="15" x2="50" y2="4" stroke="#D4652A" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="4" r="5" fill="#D4652A"/>
+        <circle cx="48" cy="2" r="1.5" fill="#E8884A" opacity="0.7"/>
+        <ellipse cx="10" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="90" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="50" cy="54" rx="28" ry="18" fill="#C084D4"/>
+        <ellipse cx="50" cy="54" rx="24" ry="15" fill="#1A1A2E"/>
+        <ellipse cx="58" cy="50" rx="7" ry="2.5" fill="#2A2A4E" opacity="0.5"/>
+        <circle cx="40" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="60" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="40" cy="54" r="1.5" fill="#1A1A2E"/>
+        <circle cx="60" cy="54" r="1.5" fill="#1A1A2E"/>
+        <path d="M 45 64 Q 50 67 55 64" stroke="#E8A0C8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    <span class="quad-badge">2</span>
+    </button>
+  </div>
+  <div class="bottomnav">
+    <button class="nav-item active" data-screen="Overview">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="3.3" width="10" height="7" rx="1.5"/><rect x="15.3" y="3.3" width="5.4" height="7" rx="1.5"/><rect x="3.3" y="12.3" width="5.4" height="8.4" rx="1.5"/><rect x="10.7" y="12.3" width="10" height="8.4" rx="1.5"/></svg></span>
+      Overview
+    </button>
+    <button class="nav-item" data-screen="Schedule">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="5" width="17.4" height="15.5" rx="2"/><path d="M3.3 9.5h17.4M8 3v4M16 3v4"/></svg></span>
+      Schedule
+    </button>
+    <button class="nav-item create" data-screen="Work">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.3" width="18" height="12.2" rx="2"/><path d="M8.5 7.3V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.3"/><path d="M3 12.5h18"/></svg></span>
+    </button>
+    <button class="nav-item" data-screen="Messages">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.8h16a1 1 0 0 1 1 1V16a1 1 0 0 1-1 1H9.2L5 20.5V17H4a1 1 0 0 1-1-1V6.8a1 1 0 0 1 1-1Z"/><circle cx="8.3" cy="11.3" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.3" r=".9" fill="currentColor" stroke="none"/><circle cx="15.7" cy="11.3" r=".9" fill="currentColor" stroke="none"/></svg></span>
+      Messages
+    </button>
+    <button class="nav-item" data-screen="My CITYLUXOS">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"/></svg></span>
+      My CITYLUXOS
+    </button>
+  </div>
+</div>
+<!-- /view-workspace -->
+
+<!-- ============ GAMING ============ -->
+<div class="platform-view pv-hidden" id="view-gaming">
+  <div class="topbar">
+    <div class="platform-badge b-gaming" title="Gaming">🎮</div>
+    <nav class="platform-tabs">
+      <button class="platform-tab active">Games</button>
+      <button class="platform-tab">Tournaments</button>
+      <button class="platform-tab">Challenges</button>
+      <button class="platform-tab">Rankings</button>
+    </nav>
+    <button class="search-pill" title="Search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    </button>
+  </div>
+  <div class="platform-body">
+    <div class="platform-hero">Gaming</div>
+    <div class="platform-sub">Play, compete, and earn CLC rewards across CityLuxOs tournaments.</div>
+    <div class="pgrid">
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(108,99,255,.18)">🏎️</div><div class="pcard-title">Neon Drift</div><div class="pcard-sub">Racing · 12.4K playing</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(108,99,255,.18)">🧩</div><div class="pcard-title">Blockstack</div><div class="pcard-sub">Puzzle · 8.1K playing</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(108,99,255,.18)">⚔️</div><div class="pcard-title">Arena Clash</div><div class="pcard-sub">MOBA · 21K playing</div></div>
+      <div class="pcard"><div class="pcard-thumb" style="background:rgba(108,99,255,.18)">🏆</div><div class="pcard-title">Weekend Cup</div><div class="pcard-sub">Tournament · 500 CLC prize pool</div></div>
+    </div>
+    <div class="discover-card" data-cycle='["entertainment","marketplace","workspace"]'>
+      <div class="d-icon"></div>
+      <div class="d-copy">
+        <div class="d-eyebrow">Discover</div>
+        <div class="d-title"></div>
+      </div>
+      <div class="d-arrow">→</div>
+    </div>
+  </div>
+  <div class="tip-edge" title="Tip">
+    <span class="gem">💎</span>
+    <span class="amt">50</span>
+    <span class="lbl">Tip</span>
+  </div>
+  <div class="quad-edge">
+    <button class="quad-btn" title="Marketplace">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <path d="M14.5 15.5h15l-1.1 13.2a2.1 2.1 0 0 1-2.1 1.9H17.7a2.1 2.1 0 0 1-2.1-1.9Z" fill="#F0609F"/>
+        <path d="M17.6 15.5v-2.6a3.7 3.7 0 0 1 7.4 0v2.6" fill="none" stroke="#7CC576" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="19.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <rect x="22.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <rect x="25.3" y="16.5" width="1.3" height="12.9" fill="#D94886" opacity=".7"/>
+        <path d="M27 16.5 25.9 29.6h1.4a2.1 2.1 0 0 0 2.1-1.9l1.1-11.2Z" fill="#C9457A" opacity=".55"/>
+        <path d="M5.5 19.5h11l-.85 8.9a1.7 1.7 0 0 1-1.7 1.6H8.05a1.7 1.7 0 0 1-1.7-1.6Z" fill="#8FCB7A"/>
+        <path d="M7.9 19.5v-1.9a3 3 0 0 1 6 0v1.9" fill="none" stroke="#F080AE" stroke-width="1.6" stroke-linecap="round"/>
+        <rect x="9.2" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+        <rect x="11.6" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+        <rect x="14" y="20.3" width="1.1" height="9" fill="#6FAE5C" opacity=".7"/>
+      </svg>
+    <span class="quad-badge">3</span>
+    </button>
+    <button class="quad-btn workspace-btn" title="Workspace">
+      <svg viewBox="0 0 36 36" width="24" height="24">
+        <circle cx="18" cy="18" r="17" fill="#4C88E0"/>
+        <ellipse cx="18" cy="18" rx="7.5" ry="17" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+        <ellipse cx="18" cy="18" rx="17" ry="7.5" fill="none" stroke="#F2F6FB" stroke-width="1.6"/>
+        <line x1="1" y1="18" x2="35" y2="18" stroke="#F2F6FB" stroke-width="1.6"/>
+        <line x1="18" y1="1" x2="18" y2="35" stroke="#F2F6FB" stroke-width="1.6"/>
+        <path d="M4 11h28M4 25h28" stroke="#F2F6FB" stroke-width="1.6" fill="none"/>
+        <circle cx="18" cy="18" r="17" fill="none" stroke="#2C6BAE" stroke-width="1"/>
+      </svg>
+    <span class="quad-badge">1</span>
+    </button>
+    <button class="quad-btn" title="Entertainment">
+      <svg viewBox="0 0 36 36" width="34" height="34">
+        <ellipse cx="15.5" cy="20" rx="14.5" ry="15.5" fill="#B9332A" transform="rotate(-18 15.5 20)"/>
+        <ellipse cx="19.5" cy="16.3" rx="14.5" ry="15.5" fill="#F0553F" transform="rotate(-18 19.5 16.3)"/>
+        <path d="M14.6 10.6 14.6 25.3 16 25.3 16 11.3Z" fill="#CBD0D6"/>
+        <path d="M16 11 27.2 17.3 16 25.4Z" fill="#FFFFFF"/>
+      </svg>
+    <span class="quad-badge">4</span>
+    </button>
+    <button class="quad-btn ai-btn" title="AI Assistant">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="52" rx="42" ry="38" fill="#F5EDE4"/>
+        <path d="M 8 52 Q 8 15 50 15 Q 92 15 92 52" fill="#D4652A"/>
+        <ellipse cx="32" cy="28" rx="14" ry="5" fill="#E8884A" opacity="0.5"/>
+        <line x1="50" y1="15" x2="50" y2="4" stroke="#D4652A" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="50" cy="4" r="5" fill="#D4652A"/>
+        <circle cx="48" cy="2" r="1.5" fill="#E8884A" opacity="0.7"/>
+        <ellipse cx="10" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="90" cy="50" rx="7" ry="9" fill="#D4652A"/>
+        <ellipse cx="50" cy="54" rx="28" ry="18" fill="#C084D4"/>
+        <ellipse cx="50" cy="54" rx="24" ry="15" fill="#1A1A2E"/>
+        <ellipse cx="58" cy="50" rx="7" ry="2.5" fill="#2A2A4E" opacity="0.5"/>
+        <circle cx="40" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="60" cy="54" r="5" fill="#FFFFFF"/>
+        <circle cx="40" cy="54" r="1.5" fill="#1A1A2E"/>
+        <circle cx="60" cy="54" r="1.5" fill="#1A1A2E"/>
+        <path d="M 45 64 Q 50 67 55 64" stroke="#E8A0C8" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    <span class="quad-badge">2</span>
+    </button>
+  </div>
+  <div class="bottomnav">
+    <button class="nav-item active" data-screen="Arena">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6Z"/></svg></span>
+      Arena
+    </button>
+    <button class="nav-item" data-screen="Matches">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 14h6l-1 8 9-12h-6Z"/></svg></span>
+      Matches
+    </button>
+    <button class="nav-item create" data-screen="Compete">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v3.5a5 5 0 0 1-5 5 5 5 0 0 1-5-5Z"/><path d="M4.5 4.5h2.5v2a3 3 0 0 1-2.5 3"/><path d="M19.5 4.5H17v2a3 3 0 0 0 2.5 3"/><path d="M12 12.5v3.5M9 19.5h6v-2.3a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1Z"/></svg></span>
+    </button>
+    <button class="nav-item" data-screen="Friends">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.2" r="3"/><path d="M3.3 20c0-3.3 2.6-5.8 5.7-5.8s5.7 2.5 5.7 5.8"/><circle cx="17.3" cy="9.3" r="2.3"/><path d="M15 14.6c2.5.3 4.3 2.3 4.5 4.9"/></svg></span>
+      Friends
+    </button>
+    <button class="nav-item" data-screen="My CITYLUXOS">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c0-4.1 3.4-6.8 7.5-6.8s7.5 2.7 7.5 6.8"/></svg></span>
+      My CITYLUXOS
+    </button>
+  </div>
+</div>
+<!-- /view-gaming -->
+
+<!-- ============ AI OVERLAY (shared, per Volume 1 §9 — opens over any platform) ============ -->
+<div class="transform-flash" id="transformFlash"></div>
+
+<div class="ai-overlay" id="aiOverlay">
+  <div class="ai-sheet">
+    <div class="ai-sheet-head">
+      <div class="ai-title">🤖 AI Assistant</div>
+      <button class="ai-close" id="aiClose">✕</button>
+    </div>
+    <div class="ai-sheet-body">
+    <div class="ai-context" id="aiContext">Currently helping with: Entertainment</div>
+
+    <div class="provider-select" id="providerSelect">
+      <div class="provider-select-label">AI provider — Vol.6 §4, provider selector</div>
+      <button class="provider-btn" id="providerBtn">
+        <span class="cur"><span class="avail-dot"></span><span id="providerCurrent">Claude</span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="provider-list" id="providerList">
+        <button class="provider-opt" data-provider="ChatGPT">ChatGPT</button>
+        <button class="provider-opt" data-provider="Claude">Claude</button>
+        <button class="provider-opt" data-provider="Perplexity">Perplexity</button>
+        <button class="provider-opt" data-provider="Manus">Manus</button>
+        <button class="provider-opt" data-provider="Kimi">Kimi</button>
+      </div>
+    </div>
+
+    <div class="ai-chips" id="aiChips">
+      <span class="ai-chip" data-chip="Entertainment">Content creation</span>
+      <span class="ai-chip" data-chip="Marketplace">Commerce assistant</span>
+      <span class="ai-chip" data-chip="Workspace">Service assistant</span>
+      <span class="ai-chip" data-chip="Gaming">Gaming assistant</span>
+    </div>
+    <div class="ai-input-row">
+      <input type="text" placeholder="Ask AI anything…">
+      <button class="ai-send">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+      </button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QUICK TIP PANEL (shared) — per spec: opens immediately on ============ -->
+<!-- ============ Tip CLC tap; Recipient, Presets, Custom Amount, Message, ============ -->
+<!-- ============ Wallet Balance, USD Equivalent, Send Tip.                ============ -->
+<div class="ai-overlay" id="tipOverlay">
+  <div class="ai-sheet">
+    <div class="ai-sheet-head">
+      <div class="ai-title">💎 Tip</div>
+      <button class="ai-close" id="tipClose">✕</button>
+    </div>
+    <div class="ai-sheet-body">
+
+    <div class="tip-recipient">
+      <div class="tr-avatar" id="tipAvatar">?</div>
+      <div>
+        <div class="tr-name" id="tipName">Creator</div>
+        <div class="tr-sub">Recipient</div>
+      </div>
+    </div>
+
+    <div class="tip-presets" id="tipPresets">
+      <div class="tip-preset" data-amt="10">10</div>
+      <div class="tip-preset active" data-amt="50">50</div>
+      <div class="tip-preset" data-amt="100">100</div>
+      <div class="tip-preset" data-amt="500">500</div>
+    </div>
+
+    <div class="tip-custom-row">
+      <input type="number" id="tipCustomAmt" min="1" step="1" value="50" placeholder="Custom amount">
+      <span style="font-size:11.5px; color:var(--text-mid); flex:0 0 auto;">CLC</span>
+    </div>
+    <div class="tip-usd">≈ $<b id="tipUsd">5.00</b> USD · 1 CLC = $0.10</div>
+
+    <div class="tip-message">
+      <input type="text" id="tipMsgInput" placeholder="Add an appreciation message (optional)" maxlength="80">
+    </div>
+
+    <div class="tip-balance-row">
+      <span>Wallet Balance</span>
+      <b>1,240 CLC</b>
+    </div>
+
+    <button class="tip-send-btn" id="tipSendBtn">
+      Send Tip
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+    </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ UNIVERSAL SEARCH (shared) — automatically searches within ============ -->
+<!-- ============ the active platform context (Volume 6 §2). Also lets the ============ -->
+<!-- ============ user jump straight to another platform's search.         ============ -->
+<div class="ai-overlay" id="searchOverlay">
+  <div class="ai-sheet">
+    <div class="ai-sheet-head">
+      <div class="ai-title">🔍 Universal Search</div>
+      <button class="ai-close" id="searchClose">✕</button>
+    </div>
+    <div class="ai-sheet-body">
+
+    <div class="search-input-row">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search…">
+    </div>
+
+    <div class="ai-context" id="searchContext">Searching in: Entertainment</div>
+    <div class="search-scope-chips" id="searchScopeChips"></div>
+
+    <div class="search-switch-row" id="searchSwitchRow">
+      <span class="ssw-icon">🔀</span>
+      <span class="ssw-text">Looking for something else? <b id="searchSwitchLabel">Search Marketplace instead</b></span>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SPEC SHEET (shared) — document-cited content for every nav destination. ============ -->
+<!-- ============ Replaces "coming soon" toasts; content is sourced from CITYLUXOS.md. ============ -->
+<div class="ai-overlay" id="specOverlay">
+  <div class="ai-sheet">
+    <div class="ai-sheet-head">
+      <div class="ai-title" id="specTitle">Screen</div>
+      <button class="ai-close" id="specClose">✕</button>
+    </div>
+    <div class="ai-sheet-body">
+    <span class="spec-cite" id="specCite">§0 · Section</span>
+    <p class="spec-lede" id="specLede">Lede text.</p>
+    <div class="spec-list" id="specList"></div>
+    <div class="spec-note" id="specNote" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MY CITYLUXOS (shared) — Vol.6 §11: the canonical, full home for Profile, ============ -->
+<!-- ============ Settings, Wallet, Notifications, and AI Assistant. Two-tier rule: AI and ============ -->
+<!-- ============ CLC Tip also have floating shortcuts, but this remains the full home.    ============ -->
+<div class="ai-overlay" id="hubOverlay">
+  <div class="ai-sheet">
+    <div class="ai-sheet-head">
+      <div class="ai-title">My CITYLUXOS</div>
+      <button class="ai-close" id="hubClose">✕</button>
+    </div>
+    <div class="ai-sheet-body">
+    <p class="spec-lede">Vol.6 §11 — the canonical, full home for every shared, Core-owned service. Tap any below:</p>
+    <button class="hub-link" data-hub="profile">
+      <span class="hl-main"><span class="hl-ic">👤</span><span><div class="hl-name">Identity & Profile</div><div class="hl-sub">Vol.6 §6 — includes Settings & Privacy</div></span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="hub-link" data-hub="wallet">
+      <span class="hl-main"><span class="hl-ic">💎</span><span><div class="hl-name">Wallet (CLC)</div><div class="hl-sub">Vol.6 §5</div></span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="hub-link" data-hub="notifications">
+      <span class="hl-main"><span class="hl-ic">🔔</span><span><div class="hl-name">Notifications</div><div class="hl-sub">Vol.6 §7</div></span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="hub-link" data-hub="ai">
+      <span class="hl-main"><span class="hl-ic">🤖</span><span><div class="hl-name">AI Assistant</div><div class="hl-sub">Vol.6 §4 — Multi-AI Gateway</div></span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <div class="spec-note" style="margin-top:6px;">"My CITYLUXOS never takes on platform-owned functionality. It has no Feed, no Products, no Bookings, no Matches."</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+  // ---------- Toast helper: quick feedback for anything without a real screen ----------
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toastEl.classList.remove('show'), 1600);
+  }
+
+  // ---------- SCREENS: document-cited content for every nav destination, sourced from CITYLUXOS.md ----------
+  const SCREENS = {
+    entertainment: {
+      Explore: { cite:'§13 · Explore', lede:'"Explore displays:"', items:['Trending','New Creators','Viral Shorts','Popular Videos','Live Now','Podcasts','Communities','Topics','Marketplace Discoveries','Workspace Services','Gaming Events'] },
+      Create: { cite:'§7 · Create Menu', lede:'"The Create button only creates Entertainment content."', items:['Create Post','Create Story','Upload Photos','Upload Short','Upload Video','Go Live','Create Podcast','Start Audio Room','Create Community','Create Event','Write Article'] },
+      Chats: { cite:'§23 · Messaging', lede:'"Entertainment uses the shared messaging system. Supports:"', items:['Creator Messages','Community Chats','Group Chats','Media Sharing','Voice Notes','Video Calls'] },
+      Videos: { cite:'§16 · Long Videos', lede:'"Supports:"', items:['Chapters','Captions','Subtitles','Playlists','Premieres','Monetization','Resolution Selection','Playback Speed','Watch Later'] },
+      Stories: { cite:'§14 · Stories', lede:'"Supports:"', items:['Images','Video','Music','Polls','Questions','Links','Mentions','Stickers','Countdown','Location'], note:'"Stories expire after platform-defined duration unless archived."' },
+      Live: { cite:'§17 · Live Streaming', lede:'"Supports:"', items:['Live Chat','Gifts','CLC Tips','Moderators','Guests','Screen Sharing','Live Polls','Replay','Clips'] },
+      Learning: { cite:'§19 · Learning', lede:'"Supports:"', items:['Educational Videos','Tutorials','Courses','Lessons','Articles','Educational Podcasts','Learning Playlists','Quizzes & Assessments','Progress','Certificates'] }
+    },
+    marketplace: {
+      Categories: { cite:'§9 · Catalog Management', lede:'"Includes:"', items:['Categories','Collections','Brands','Variants','Attributes','Specifications','Images','Videos','Documents'] },
+      Inbox: { cite:'§23 · Messaging', lede:'"Marketplace uses the shared messaging system. Supports:"', items:['Buyer ↔ Seller','Buyer ↔ Store Staff','Store Support','Order Conversations','Attachments','Voice Notes'] },
+      Cart: { cite:'§11 · Order Management', lede:'"Supports:"', items:['Pending Orders','Confirmed Orders','Processing','Packed','Shipped','Delivered','Cancelled','Refunded'], note:'§13 Financial Operations adds: CLC Payments, Card Payments, Bank Transfer, Mobile Money.' },
+      Products: { cite:'§7 · Product Types', lede:'"Supports:"', items:['Physical Products','Digital Products','Downloadable Products','Gift Cards','Event Tickets','Rental Products','Subscription Products','Pre-orders'] },
+      Worldwide: { cite:'§12 · Logistics', lede:'"Supports:"', items:['Local Delivery','National Shipping','International Shipping','Pickup Points','Store Pickup','Courier Integration','Shipment Tracking'] },
+      Manufacturers: { cite:'§8 · Store Types', lede:'"Supports:"', items:['Individual Store','Brand Store','Enterprise Store','Government Store','Non-Profit Store','Manufacturer Store','Distributor Store'] }
+    },
+    workspace: {
+      Schedule: { cite:'§13 · Calendar', lede:'"Supports:"', items:['Daily View','Weekly View','Monthly View','Staff Schedules','Booking Availability','Holidays','Time Off'] },
+      Work: { cite:'§24 · Data Ownership', lede:'"Workspace owns:"', items:['Projects','Work Orders','Operational Inventory','Team Data'], note:'§12 Team Management adds: Staff, Roles, Permissions, Branches, Departments, Service Locations.' },
+      Messages: { cite:'§22 · Messaging', lede:'"Workspace uses the shared messaging system. Supports:"', items:['Customer ↔ Provider','Team Chat','File Sharing','Voice Notes','Video Calls','Booking Conversations'] },
+      Services: { cite:'§8 · Service Catalog', lede:'"Supports:"', items:['Fixed Price Services','Quote-Based Services','Hourly Services','Subscription Services','Emergency Services','Remote Services','On-site Services'], note:'§6 Workspace Templates: over 200 standardized service templates.' },
+      Appointments: { cite:'§9 · Booking System', lede:'"Supports:"', items:['Instant Booking','Appointment Requests','Calendar Availability','Rescheduling','Cancellation','Waiting Lists','Recurring Appointments'] },
+      Clients: { cite:'§10 · Customer Requests', lede:'"Customers may submit:"', items:['Quote Requests','Service Requests','Emergency Requests','Consultation Requests','Inspection Requests','Support Requests'] },
+      Business: { cite:'§15 · Financial Operations', lede:'"Supports:"', items:['CLC Payments','Deposits','Milestone Payments','Invoices','Estimates','Receipts','Refunds'], note:'§16 AI Workspace adds "Business Insights" under AI assistance.' }
+    },
+    gaming: {
+      Matches: { cite:'§8 · Tournament Management', lede:'"Organizers can manage:"', items:['Registration','Brackets','Match Scheduling','Check-in','Referees','Rules','Prizes','Results'], note:'"Where a tournament involves entry fees or monetary prizes, registration and prize distribution are subject to jurisdiction-specific eligibility, age, identity, and geolocation verification."' },
+      Compete: { cite:'§11 · Rewards', lede:'"Supports:"', items:['CLC Rewards','Digital Rewards','Tournament Prizes','Achievement Rewards','Loyalty Rewards','Daily Rewards'] },
+      Friends: { cite:'§15 · Social Features', lede:'"Players can:"', items:['Add Friends','Follow Players','Block Players','Create Groups','Share Achievements','Share Highlights'] },
+      Games: { cite:'§5 · Skill Game Categories', lede:'"Supports competitive, skill-based game genres, including:"', items:['Puzzle Games','Card Games','Strategy Games','Racing Games','Sports Games','FPS Games','MOBA Games'], note:'"Game categories are selected and configured so that outcomes are determined by player skill."' },
+      Tournaments: { cite:'§7 · Tournaments', lede:'"Supports:"', items:['Open Tournaments','Invitational Tournaments','Community Tournaments','Brand Sponsored Tournaments','Esports Championships','Regional Events','Global Events'] },
+      Challenges: { cite:'Vol.10 §9.3 · Competition', lede:'"Includes:"', items:['Entry-based competitions','Free competitions','Skill-based competitions','Seasons','Leaderboards','Challenges','Match history','Tournament history','Team competitions','Esports'] },
+      Rankings: { cite:'§9 · Rankings', lede:'"Supports:"', items:['Global Rankings','Regional Rankings','Seasonal Rankings','Friends Rankings','Clan Rankings','Game Rankings'] }
+    }
+  };
+
+  // ---------- CORE_SCREENS: My CITYLUXOS hub content — Vol.6 §5/§6/§7, Vol.10 §3.1 ----------
+  const CORE_SCREENS = {
+    wallet: {
+      cite: 'Vol.6 §5 · Wallet (CLC)',
+      lede: '"Users maintain one unified CLC Wallet. The Wallet automatically presents balances, transactions, financial tools, and actions relevant to the active platform while maintaining one unified account."',
+      items: ['Send','Receive','Pay','Withdraw','Deposit','Transaction History','Rewards','Subscriptions','Tips','Marketplace Payments','Workspace Payments','Gaming Rewards','Tournament Rewards','Creator Support'],
+      note: '"1 CLC = 0.1 USD. CLC is an indivisible user-facing currency. Minimum transaction amount: 1 CLC." (Vol.7 §2)'
+    },
+    profile: {
+      cite: 'Vol.10 §3.1 · Identity, Account and Global Profile',
+      lede: '"CITYLUXOS Core is the authoritative owner of every user\'s:"',
+      items: ['Account','Login credentials','Authentication records','Global user ID','Username','Display name','Profile photo','Cover image','Biography','Contact information','Verification status','Account tier','Privacy preferences','Security preferences','Language','Region','Accessibility preferences','Connected devices','Account recovery settings','Global blocks and restrictions','Global settings'],
+      note: 'The document defines no separate "Settings" section — settings, privacy, security, language, and recovery all live inside this same Global Profile.'
+    },
+    notifications: {
+      cite: 'Vol.6 §7 · Notifications',
+      lede: '"The shared Notification Center groups notifications by platform context." For the platform you\'re currently viewing:',
+      byPlatform: {
+        entertainment: ['Likes','Comments','Mentions','Shares','Followers','Community Activity','Live Alerts','Story Mentions'],
+        marketplace: ['Order Updates','Shipment Updates','Payment Status','Promotions','Store Messages','Price Drops','Wishlist Alerts'],
+        workspace: ['Booking Requests','Booking Confirmations','Appointment Reminders','Customer Messages','Reviews','Payments','Quote Requests'],
+        gaming: ['Friend Requests','Match Invitations','Tournament Updates','Rewards','Achievement Unlocks','Team Invitations','Live Events']
+      }
+    }
+  };
+
+  // ---------- Spec Sheet: opens document-cited content for any nav destination ----------
+  const specOverlay = document.getElementById('specOverlay');
+  function openSpecSheet(label, data){
+    if (!data){ toast(label + ' — not yet in the spec'); return; }
+    const items = data.byPlatform ? data.byPlatform[currentPlatform] : data.items;
+    document.getElementById('specTitle').textContent = label;
+    document.getElementById('specCite').textContent = data.cite;
+    document.getElementById('specLede').textContent = data.lede;
+    document.getElementById('specList').innerHTML = items.map(t=>
+      '<div class="spec-row"><span class="dot"></span><span class="txt">'+t+'</span></div>'
+    ).join('');
+    const noteEl = document.getElementById('specNote');
+    if (data.note){ noteEl.style.display='flex'; noteEl.textContent = data.note; }
+    else { noteEl.style.display='none'; }
+    specOverlay.classList.add('show');
+  }
+  document.getElementById('specClose').addEventListener('click', ()=> specOverlay.classList.remove('show'));
+  specOverlay.addEventListener('click', (e)=>{ if (e.target === specOverlay) specOverlay.classList.remove('show'); });
+
+  // ---------- My CITYLUXOS hub: Vol.6 §11 — canonical home for Profile, Settings, Wallet, Notifications, AI ----------
+  const hubOverlay = document.getElementById('hubOverlay');
+  function openHub(){ hubOverlay.classList.add('show'); }
+  document.getElementById('hubClose').addEventListener('click', ()=> hubOverlay.classList.remove('show'));
+  hubOverlay.addEventListener('click', (e)=>{ if (e.target === hubOverlay) hubOverlay.classList.remove('show'); });
+  document.querySelectorAll('.hub-link').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      hubOverlay.classList.remove('show');
+      const target = btn.dataset.hub;
+      if (target === 'ai'){ openAiOverlay(); }
+      else if (target === 'wallet'){ openSpecSheet('Wallet (CLC)', CORE_SCREENS.wallet); }
+      else if (target === 'notifications'){ openSpecSheet('Notifications', CORE_SCREENS.notifications); }
+      else if (target === 'profile'){ openSpecSheet('Identity & Profile', CORE_SCREENS.profile); }
+    });
+  });
+
+  // ---------- Platform Switching (Core Shell transforms, Volume 1 §9) ----------
+  // "Entertainment UI disappears. Marketplace UI appears. Core remains."
+  // The Quad, Tip CLC, and bottom nav are duplicated identically into each
+  // platform-view so they never visually move or reset — only the content
+  // area (topbar + main body) actually swaps.
+  const platformViews = {
+    entertainment: document.getElementById('view-entertainment'),
+    marketplace: document.getElementById('view-marketplace'),
+    workspace: document.getElementById('view-workspace'),
+    gaming: document.getElementById('view-gaming')
+  };
+  let currentPlatform = 'entertainment';
+
+  const platformAccent = {
+    entertainment: 'rgba(255,110,82,.35)',
+    marketplace: 'rgba(240,96,159,.35)',
+    workspace: 'rgba(76,136,224,.35)',
+    gaming: 'rgba(108,99,255,.35)'
+  };
+  const transformFlash = document.getElementById('transformFlash');
+
+  function switchPlatform(name){
+    if (!platformViews[name] || name === currentPlatform) return;
+
+    // Brief color-flash in the destination platform's accent, so switching
+    // reads as "transforming into a new environment" rather than an
+    // instant tab-swap — the incoming view then fades/scales in underneath
+    // via the .platform-view entrance animation.
+    transformFlash.style.background = platformAccent[name];
+    transformFlash.classList.add('show');
+    setTimeout(()=> transformFlash.classList.remove('show'), 90);
+
+    platformViews[currentPlatform].classList.add('pv-hidden');
+    platformViews[name].classList.remove('pv-hidden');
+    currentPlatform = name;
+    // Sync every view's landing nav-item (Feed/Home/Overview/Arena
+    // depending on platform) active state so whichever view is now
+    // visible shows its own landing tab as active.
+    document.querySelectorAll('.platform-view').forEach(v=>{
+      v.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    });
+    const landing = landingLabel[name];
+    const landingBtn = landing && platformViews[name].querySelector('[data-screen="'+landing+'"]');
+    if (landingBtn) landingBtn.classList.add('active');
+  }
+
+  // ---------- Bottom nav ----------
+  // Per the Active Platform Principle: the landing tab (Feed/Home/Overview/
+  // Arena depending on platform) never jumps platforms — it only resets/
+  // scrolls-to-top within whichever platform is currently active. The ONLY
+  // ways back to Entertainment are the Quad's Entertainment button, a
+  // Discover card, or Search.
+  const platformScroller = {
+    entertainment: () => document.querySelector('#view-entertainment .feed'),
+    marketplace: () => document.querySelector('#view-marketplace .platform-body'),
+    workspace: () => document.querySelector('#view-workspace .platform-body'),
+    gaming: () => document.querySelector('#view-gaming .platform-body')
+  };
+  const landingLabel = { entertainment:'Feed', marketplace:'Home', workspace:'Overview', gaming:'Arena' };
+  document.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const screen = btn.dataset.screen;
+      const view = btn.closest('.platform-view');
+      view.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (screen === landingLabel[currentPlatform]){
+        const scroller = platformScroller[currentPlatform] && platformScroller[currentPlatform]();
+        if (scroller) scroller.scrollTo({ top:0, behavior:'smooth' });
+      } else if (screen === 'My CITYLUXOS'){
+        openHub();
+      } else {
+        openSpecSheet(screen, SCREENS[currentPlatform] && SCREENS[currentPlatform][screen]);
+      }
+    });
+  });
+
+  // ---------- Platform tabs (Products/Worldwide/Manufacturers etc.) — Vol.2-5 §3 Top Navigation ----------
+  document.querySelectorAll('.platform-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const tabs = btn.closest('.platform-tabs');
+      tabs.querySelectorAll('.platform-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      openSpecSheet(btn.textContent.trim(), SCREENS[currentPlatform] && SCREENS[currentPlatform][btn.textContent.trim()]);
+    });
+  });
+
+  // ---------- Focus Mode: real client-side feed filtering ----------
+  const modeKeyMap = {
+    'Videos':'videos', 'Stories':'stories', 'Live':'live', 'Learning':'learning'
+  };
+  const allPosts = Array.from(document.querySelectorAll('.post[data-modes]'));
+  const feedEl = document.querySelector('.feed');
+  let emptyStateEl = null;
+
+  function applyFocusMode(label){
+    const key = modeKeyMap[label] || 'videos';
+    let visibleCount = 0;
+
+    allPosts.forEach(post=>{
+      const modes = post.dataset.modes.split(' ');
+      const match = modes.includes(key);
+      post.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+
+    if (emptyStateEl){ emptyStateEl.remove(); emptyStateEl = null; }
+    if (visibleCount === 0){
+      emptyStateEl = document.createElement('div');
+      emptyStateEl.className = 'empty-state';
+      emptyStateEl.innerHTML =
+        '<div class="emoji">🌙</div>' +
+        '<div class="title">Nothing in ' + label + ' yet</div>' +
+        '<div class="sub">Check back soon, or try another tab.</div>';
+      feedEl.appendChild(emptyStateEl);
+    }
+    feedEl.scrollTo({ top:0, behavior:'smooth' });
+  }
+
+  document.querySelectorAll('.focus-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.focus-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      tab.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+      applyFocusMode(tab.dataset.mode);
+      // Everything else — topbar, nav, floating buttons, overlays — is
+      // untouched by this; only which posts render in the feed changes.
+    });
+  });
+
+  // ---------- Like ----------
+  document.querySelectorAll('.a-btn.like').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const path = btn.querySelector('svg path');
+      const liked = path.getAttribute('fill') === 'var(--coral)';
+      path.setAttribute('fill', liked ? '#E9EDF1' : 'var(--coral)');
+    });
+  });
+
+  // ---------- Save (the 🔖 icon in the action row) ----------
+  document.querySelectorAll('.a-btn.tip').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const saved = btn.classList.toggle('saved');
+      btn.style.transform = saved ? 'scale(1.15)' : 'scale(1)';
+      toast(saved ? '🔖 Saved to your collection' : 'Removed from saved');
+    });
+  });
+
+  // ---------- Cross-platform discovery ----------
+  // Per the canonical doc §11: every platform can recommend all 3 others,
+  // not just "the next one in a loop." Each Discover card continuously
+  // auto-rotates through its 3 reachable platforms (with a slide
+  // transition) so a tap can jump to whichever one is showing —
+  // Entertainment can reach Gaming or Workspace directly, not only
+  // Marketplace.
+  const discoveryMeta = {
+    marketplace: {
+      icon:'🛍️', color:'#F0609F', title:'Shop it on Marketplace',
+      iconBg:'linear-gradient(135deg, #F0609F, #C43E7A)',
+      cardBg:'linear-gradient(120deg, rgba(240,96,159,.28), rgba(196,62,122,.08))',
+      border:'rgba(240,96,159,.55)', glow:'rgba(240,96,159,.28)'
+    },
+    workspace: {
+      icon:'🌐', color:'#5BA8EE', title:'Book it on Workspace',
+      iconBg:'linear-gradient(135deg, #5BA8EE, #2C6BAE)',
+      cardBg:'linear-gradient(120deg, rgba(76,136,224,.28), rgba(44,107,174,.08))',
+      border:'rgba(91,168,238,.55)', glow:'rgba(76,136,224,.28)'
+    },
+    gaming: {
+      icon:'🎮', color:'#8C82FF', title:'Play it on Gaming',
+      iconBg:'linear-gradient(135deg, #8C82FF, #4A3FCC)',
+      cardBg:'linear-gradient(120deg, rgba(108,99,255,.30), rgba(74,63,204,.08))',
+      border:'rgba(140,130,255,.55)', glow:'rgba(108,99,255,.28)'
+    },
+    entertainment: {
+      icon:'🎬', color:'#FF9166', title:'Watch it on Entertainment',
+      iconBg:'linear-gradient(135deg, #FF9166, #E2402C)',
+      cardBg:'linear-gradient(120deg, rgba(255,110,82,.28), rgba(226,64,44,.08))',
+      border:'rgba(255,145,102,.55)', glow:'rgba(255,110,82,.28)'
+    }
+  };
+
+  document.querySelectorAll('.discover-card[data-cycle]').forEach(card=>{
+    const list = JSON.parse(card.dataset.cycle);
+    const iconEl = card.querySelector('.d-icon');
+    const eyebrowEl = card.querySelector('.d-eyebrow');
+    const titleEl = card.querySelector('.d-title');
+    let idx = 0;
+
+    function render(target){
+      const meta = discoveryMeta[target];
+      card.dataset.goto = target;
+      iconEl.textContent = meta.icon;
+      iconEl.style.background = meta.iconBg;
+      eyebrowEl.style.color = meta.color;
+      titleEl.textContent = meta.title;
+      card.style.background = meta.cardBg;
+      card.style.borderColor = meta.border;
+      card.style.boxShadow = '0 8px 28px ' + meta.glow;
+    }
+    render(list[0]);
+
+    // Continuous, nonstop — runs for the lifetime of the page, not just
+    // once. Advances every ~3.2s regardless of which platform is active;
+    // updating a hidden card is harmless and keeps every screen's
+    // rotation in sync with the others.
+    setInterval(()=>{
+      [iconEl, card.querySelector('.d-copy')].forEach(el=>{
+        el.style.transition = 'transform .22s ease, opacity .22s ease';
+        el.style.transform = 'translateX(-8px)';
+        el.style.opacity = '0';
+      });
+      setTimeout(()=>{
+        idx = (idx + 1) % list.length;
+        render(list[idx]);
+        [iconEl, card.querySelector('.d-copy')].forEach(el=>{
+          el.style.transform = 'translateX(8px)';
+        });
+        requestAnimationFrame(()=>{
+          [iconEl, card.querySelector('.d-copy')].forEach(el=>{
+            el.style.transform = 'translateX(0)';
+            el.style.opacity = '1';
+          });
+        });
+      }, 230);
+    }, 3200);
+
+    card.addEventListener('click', ()=> switchPlatform(card.dataset.goto));
+  });
+
+  // ---------- Comments ----------
+  document.querySelectorAll('.comments-link').forEach(el=>{
+    el.addEventListener('click', ()=> toast('💬 Comments — coming soon'));
+  });
+
+  // ---------- The Quad: real platform switching (Marketplace/Workspace/Gaming), AI opens an overlay instead ----------
+  // Badges are duplicated per platform-view (same target can show on 3 different screens at once),
+  // so clearing must target every instance sharing the same title, not just the DOM node clicked —
+  // otherwise a badge "clears" on one screen but stays stuck showing on the other two.
+  const quadTargets = { 'Entertainment':'entertainment', 'Marketplace':'marketplace', 'Workspace':'workspace', 'Play Games':'gaming' };
+  document.querySelectorAll('.quad-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const title = btn.title;
+      document.querySelectorAll('.quad-btn[title="'+title+'"] .quad-badge').forEach(b=>{
+        b.style.display = 'none';
+      });
+
+      if (btn.classList.contains('ai-btn')){
+        openAiOverlay();
+        return;
+      }
+      const target = quadTargets[title];
+      if (target){
+        switchPlatform(target);
+      } else {
+        toast((title || 'Opening') + ' →');
+      }
+    });
+  });
+
+  // ---------- AI Overlay: does not switch platform, opens on top of whatever platform is active ----------
+  const aiOverlay = document.getElementById('aiOverlay');
+  const aiContext = document.getElementById('aiContext');
+  const platformLabel = { entertainment:'Entertainment', marketplace:'Marketplace', workspace:'Workspace', gaming:'Gaming' };
+
+  function openAiOverlay(){
+    const label = platformLabel[currentPlatform];
+    aiContext.textContent = 'Currently helping with: ' + label;
+    document.querySelectorAll('.ai-chip').forEach(chip=>{
+      chip.classList.toggle('active', chip.dataset.chip === label);
+    });
+    aiOverlay.classList.add('show');
+  }
+  document.getElementById('aiClose').addEventListener('click', ()=> aiOverlay.classList.remove('show'));
+  aiOverlay.addEventListener('click', (e)=>{ if (e.target === aiOverlay) aiOverlay.classList.remove('show'); });
+
+  // ---------- Multi-AI Gateway provider selector — Vol.6 §4 (Current: switchable; Future: CITYLUXOS Native AI) ----------
+  let selectedAIProvider = 'Claude';
+  const providerSelect = document.getElementById('providerSelect');
+  const providerBtn = document.getElementById('providerBtn');
+  const providerCurrent = document.getElementById('providerCurrent');
+  providerBtn.addEventListener('click', ()=>{
+    providerSelect.classList.toggle('open');
+  });
+  document.querySelectorAll('.provider-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      selectedAIProvider = opt.dataset.provider;
+      providerCurrent.textContent = selectedAIProvider;
+      document.querySelectorAll('.provider-opt').forEach(o=> o.classList.toggle('selected', o.dataset.provider === selectedAIProvider));
+      providerSelect.classList.remove('open');
+      toast('🤖 Switched to ' + selectedAIProvider + ' — persists across all platforms');
+    });
+  });
+  // Initialize selected state
+  document.querySelectorAll('.provider-opt').forEach(o=> o.classList.toggle('selected', o.dataset.provider === selectedAIProvider));
+
+  // ---------- Tip CLC: opens the Quick Tip Panel (per spec) instead of tipping instantly. ----------
+  // ---------- Entertainment tips whichever post is currently most visible; other ----------
+  // ---------- platforms tip a sensible target for that context (CLC Tip is ----------
+  // ---------- Core-owned, available identically on every platform). ----------
+  const tipTargetLabel = {
+    marketplace: 'Node 4 Footwear',
+    workspace: 'Node 4 Hair Studio',
+    gaming: 'Arena Clash'
+  };
+  const tipOverlay = document.getElementById('tipOverlay');
+  const tipAvatar = document.getElementById('tipAvatar');
+  const tipName = document.getElementById('tipName');
+  const tipCustomAmt = document.getElementById('tipCustomAmt');
+  const tipUsd = document.getElementById('tipUsd');
+  const tipPresets = document.getElementById('tipPresets');
+  const tipMsgInput = document.getElementById('tipMsgInput');
+  let tipRecipientName = 'Creator';
+
+  function currentTipRecipient(){
+    if (currentPlatform === 'entertainment'){
+      const feedRect = feedEl.getBoundingClientRect();
+      let best = null, bestVisible = 0;
+      allPosts.forEach(post=>{
+        if (post.style.display === 'none') return;
+        const r = post.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(r.bottom, feedRect.bottom) - Math.max(r.top, feedRect.top));
+        if (visible > bestVisible){ bestVisible = visible; best = post; }
+      });
+      return best ? best.querySelector('.name').childNodes[0].textContent.trim() : 'creator';
+    }
+    return tipTargetLabel[currentPlatform] || 'creator';
+  }
+
+  function updateUsd(){
+    const amt = Math.max(1, parseInt(tipCustomAmt.value, 10) || 1);
+    tipUsd.textContent = (amt * 0.1).toFixed(2);
+  }
+
+  document.querySelectorAll('.tip-edge').forEach(tipBtn=>{
+    tipBtn.addEventListener('click', ()=>{
+      tipBtn.style.transform = 'scale(1.15)';
+      setTimeout(()=> tipBtn.style.transform = '', 150);
+
+      tipRecipientName = currentTipRecipient();
+      tipName.textContent = tipRecipientName;
+      tipAvatar.textContent = tipRecipientName.trim().charAt(0).toUpperCase() || '?';
+      tipCustomAmt.value = 50;
+      tipMsgInput.value = '';
+      tipPresets.querySelectorAll('.tip-preset').forEach(p=> p.classList.toggle('active', p.dataset.amt === '50'));
+      updateUsd();
+      tipOverlay.classList.add('show');
+    });
+  });
+
+  tipPresets.querySelectorAll('.tip-preset').forEach(preset=>{
+    preset.addEventListener('click', ()=>{
+      tipPresets.querySelectorAll('.tip-preset').forEach(p=>p.classList.remove('active'));
+      preset.classList.add('active');
+      tipCustomAmt.value = preset.dataset.amt;
+      updateUsd();
+    });
+  });
+  tipCustomAmt.addEventListener('input', ()=>{
+    tipPresets.querySelectorAll('.tip-preset').forEach(p=> p.classList.toggle('active', p.dataset.amt === tipCustomAmt.value));
+    updateUsd();
+  });
+
+  document.getElementById('tipSendBtn').addEventListener('click', ()=>{
+    const amt = Math.max(1, parseInt(tipCustomAmt.value, 10) || 1);
+    tipOverlay.classList.remove('show');
+    toast('💎 +' + amt + ' CLC tipped to ' + tipRecipientName);
+  });
+  document.getElementById('tipClose').addEventListener('click', ()=> tipOverlay.classList.remove('show'));
+  tipOverlay.addEventListener('click', (e)=>{ if (e.target === tipOverlay) tipOverlay.classList.remove('show'); });
+
+  // ---------- Universal Search: automatically searches within the active platform context ----------
+  const searchScopes = {
+    entertainment: ['Posts','Creators','Videos','Live Streams','Communities'],
+    marketplace: ['Products','Stores','Brands','Deals'],
+    workspace: ['Workspaces','Services','Projects','Clients','Templates'],
+    gaming: ['Games','Players','Tournaments','Rewards']
+  };
+  // The platform each Search opens into "instead" — same rotation used by
+  // Discovery, so Search offers a genuine way to jump to another platform
+  // too, per Volume 1 §10 ("Universal Search" is one of only 3 ways to
+  // switch platforms, alongside the Quad and Universal Discovery).
+  const searchSwitchTarget = { entertainment:'marketplace', marketplace:'workspace', workspace:'gaming', gaming:'entertainment' };
+
+  const searchOverlay = document.getElementById('searchOverlay');
+  const searchContext = document.getElementById('searchContext');
+  const searchScopeChips = document.getElementById('searchScopeChips');
+  const searchSwitchLabel = document.getElementById('searchSwitchLabel');
+  const searchInput = document.getElementById('searchInput');
+
+  function openSearch(){
+    const label = platformLabel[currentPlatform];
+    searchContext.textContent = 'Searching in: ' + label;
+    searchScopeChips.innerHTML = searchScopes[currentPlatform]
+      .map(s => '<span class="search-scope-chip">' + s + '</span>').join('');
+    const switchTo = searchSwitchTarget[currentPlatform];
+    searchSwitchLabel.textContent = 'Search ' + platformLabel[switchTo] + ' instead';
+    searchInput.value = '';
+    searchOverlay.classList.add('show');
+  }
+  document.querySelectorAll('.search-pill').forEach(btn=>{
+    btn.addEventListener('click', openSearch);
+  });
+  document.getElementById('searchClose').addEventListener('click', ()=> searchOverlay.classList.remove('show'));
+  searchOverlay.addEventListener('click', (e)=>{ if (e.target === searchOverlay) searchOverlay.classList.remove('show'); });
+  document.getElementById('searchSwitchRow').addEventListener('click', ()=>{
+    const target = searchSwitchTarget[currentPlatform];
+    searchOverlay.classList.remove('show');
+    switchPlatform(target);
+    setTimeout(openSearch, 420);
+  });
+
+  // ---------- Sound badge ----------
+  const soundBadgeEl = document.getElementById('soundBadge');
+  if (soundBadgeEl){
+    soundBadgeEl.addEventListener('click', ()=>{
+      const label = document.getElementById('soundLabel');
+      label.classList.add('show');
+      clearTimeout(soundBadgeEl._t);
+      soundBadgeEl._t = setTimeout(()=> label.classList.remove('show'), 1800);
+    });
+  }
+
+  // Featured Sound: track whichever post is dominant in the viewport
+  // and update the disc badge + track-name label to match, like TikTok.
+  (function(){
+    const feed = document.querySelector('.feed');
+    const posts = Array.from(document.querySelectorAll('.post[data-sound]'));
+    const label = document.getElementById('soundLabel');
+    const stop1 = document.getElementById('discStop1');
+    const stop2 = document.getElementById('discStop2');
+    let current = null;
+    let labelTimer = null;
+
+    // Persistent ratio map: an IntersectionObserver callback only reports
+    // entries whose ratio crossed a threshold since the last firing, not
+    // every observed element's current state. Comparing only the entries
+    // in a single callback against each other causes the "best" pick to
+    // flicker to a stale/lower value. Keeping our own map and recomputing
+    // across ALL posts on every firing avoids that.
+    const ratios = new Map(posts.map(p => [p, 0]));
+
+    function activate(post){
+      if (!post || post === current) return;
+      current = post;
+      const name = post.dataset.sound;
+      const c1 = post.dataset.c1;
+      const c2 = post.dataset.c2;
+
+      stop1.setAttribute('stop-color', c1);
+      stop2.setAttribute('stop-color', c2);
+
+      label.textContent = name;
+      label.classList.add('show');
+      clearTimeout(labelTimer);
+      labelTimer = setTimeout(()=> label.classList.remove('show'), 2200);
+    }
+
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e => ratios.set(e.target, e.intersectionRatio));
+
+      let best = null, bestRatio = 0;
+      ratios.forEach((ratio, post) => {
+        if (post.style.display === 'none') return;
+        if (ratio > bestRatio){
+          bestRatio = ratio;
+          best = post;
+        }
+      });
+      if (best) activate(best);
+    }, { root: feed, threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] });
+
+    posts.forEach(p=> io.observe(p));
+    if (posts[0]) activate(posts[0]);
+  })();
+</script>
+
+</body>
+</html>
